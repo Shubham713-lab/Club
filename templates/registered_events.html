@@ -128,11 +128,9 @@
                                                     {% if stage.submission_text %}
                                                     <p><strong class="text-white">Text:</strong> <span class="text-gray-400">{{ stage.submission_text }}</span></p>
                                                     {% endif %}
-                                                    {% if stage.submission_file %}
+                                                    {% if stage.submission_file_url %}
                                                     <p><strong class="text-white">File:</strong>
-                                                        <a href="{{ url_for('download_submission', filename=stage.submission_file) }}" class="text-[#67E8F9] hover:underline transition duration-200 ml-2">
-                                                            <i class="fas fa-download mr-1"></i> Download
-                                                        </a>
+                                                        <a href="{{ stage_details.submission_file_url }}" target="_blank" class="text-[#67E8F9] hover:underline"><i class="fas fa-download mr-1"></i>Download File</a>
                                                     </p>
                                                     {% else %}
                                                     <p><strong class="text-white">File:</strong> <span class="text-gray-500">No file uploaded</span></p>
