@@ -808,6 +808,35 @@ def admin_dashboard():
 
     return render_template('admin_dashboard.html', event_stats=event_stats)
 
+@app.route('/view_all_users')
+def view_all_users():
+    """Displays all registered users and mentors in a table (for admin)."""
+    if session.get('role') != 'admin':
+        flash("Access denied.", "danger")
+        return redirect(url_for('login'))
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        cur.execute("""
+            SELECT user_id, name, role, email, phone, address, college 
+            FROM users
+            UNION
+            SELECT user_id, name, 'mentor' as role, email, phone, address, college 
+            FROM mentors
+        """)
+        users = cur.fetchall()
+    except Exception as e:
+        flash(f"Error fetching users: {e}", "danger")
+        users = []
+    finally:
+        cur.close()
+        conn.close()
+
+    return render_template('all_users.html', users=users)
+
+
 # ---------- progress ----------
 @app.route('/view_progress/<int:event_id>')
 def view_progress(event_id):
