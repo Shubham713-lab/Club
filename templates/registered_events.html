@@ -128,7 +128,7 @@
                                                     {% if stage.submission_text %}
                                                     <p><strong class="text-white">Text:</strong> <span class="text-gray-400">{{ stage.submission_text }}</span></p>
                                                     {% endif %}
-                                                    {% if stage.submission_file_url %}
+                                                    {% if stage_details.submission_file_url %}
                                                     <p><strong class="text-white">File:</strong>
                                                         <a href="{{ stage_details.submission_file_url }}" target="_blank" class="text-[#67E8F9] hover:underline"><i class="fas fa-download mr-1"></i>Download File</a>
                                                     </p>
