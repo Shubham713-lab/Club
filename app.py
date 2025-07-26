@@ -20,10 +20,8 @@ from psycopg2.extras import DictCursor
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# --- Hardcoded Admin Credentials (FOR DEMONSTRATION/TESTING ONLY - NOT RECOMMENDED FOR PRODUCTION) ---
-HARDCODED_ADMIN_USERNAME = "admin001"
-HARDCODED_ADMIN_PASSWORD = "admin123" # This is the plaintext password
-# --- END Hardcoded Admin Credentials ---
+admin_username = os.getenv("ADMIN_USER")
+admin_password = os.getenv("ADMIN_PASS")
 
 
 def get_db_connection():
@@ -37,9 +35,6 @@ def get_db_connection():
         print(f"DATABASE CONNECTION ERROR: {e}")
         return None
 
-# --- END NEW: PostgreSQL Imports and Configuration ---
-
-# In-memory store for shared files (per room) - Note: these will reset on server restart
 # For persistence, you'd need to store this data in your PostgreSQL DB (e.g., in a brainstorm_files table)
 shared_files = {}
 rooms = {}
@@ -229,9 +224,9 @@ def login():
         password = request.form.get('password')
 
         # --- START: Hardcoded Admin Login (FOR TESTING ONLY) ---
-        if user_id == HARDCODED_ADMIN_USERNAME and password == HARDCODED_ADMIN_PASSWORD:
+        if user_id == admin_username and password == admin_password:
             session['user'] = "Hardcoded Admin" # Or any name you prefer for this hardcoded admin
-            session['user_id'] = HARDCODED_ADMIN_USERNAME
+            session['user_id'] = admin_username
             session['role'] = 'admin'
             flash("Hardcoded Admin Login successful!", "success")
             return redirect(url_for('dashboard'))
