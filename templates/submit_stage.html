@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit for Stage: {{ stage[0] }}</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000000; /* Black background */
+            margin: 0;
+            min-height: 100vh;
+            color: #E5E7EB; /* Light gray for general text */
+        }
+
+        /* Custom animation for button hover */
+        .button-hover-animation:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(103, 232, 249, 0.4);
+        }
+
+        /* Keyframe for pulse animation for heading */
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .animate-pulse-slow {
+            animation: pulse-slow 3s infinite ease-in-out;
+        }
+
+        /* Subtle fade-in for the submission form card */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        /* Custom style for the file upload box */
+        .custom-file-upload {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 180px; /* Square dimensions */
+            height: 180px; /* Square dimensions */
+            border: 3px dashed #67E8F9; /* Dashed border with accent color */
+            border-radius: 1rem; /* Rounded corners */
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
+            background-color: #1a1a1a; /* Slightly lighter black for contrast */
+            position: relative; /* For z-index effect */
+            z-index: 1; /* Default z-index */
+        }
+
+        .custom-file-upload:hover {
+            border-color: #4FD1C5; /* Darker cyan on hover */
+            background-color: #2a2a2a; /* Slightly darker background on hover */
+            transform: translateY(-8px) scale(1.05); /* Z-axis up effect */
+            box-shadow: 0 15px 30px rgba(103, 232, 249, 0.4); /* Stronger shadow on hover */
+            z-index: 2; /* Bring to front on hover */
+        }
+
+        .custom-file-upload i {
+            font-size: 3rem; /* Large plus icon */
+            color: #67E8F9; /* Accent color for the icon */
+            transition: color 0.3s ease-in-out;
+        }
+
+        .custom-file-upload:hover i {
+            color: #4FD1C5; /* Darker cyan on hover */
+        }
+
+        /* Hide the actual file input */
+        #submission_file {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="bg-gray-900 p-4 shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <!-- Club Logo/Title -->
+            <a href="#" id="logo" class="text-[#67E8F9] text-3xl font-extrabold tracking-wide">Code Forge</a>
+            <!-- Back to Dashboard Button -->
+            <a href="{{ url_for('student_dashboard') }}">
+                <button class="bg-[#EF4444] text-white px-6 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-md hover:shadow-[#EF4444]/40">
+                    ← Back to Dashboard
+                </button>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Submission Section -->
+    <section class="py-16 px-4 sm:px-6 lg:px-8 flex justify-center items-center">
+        <div id="submit" class="bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-800 max-w-2xl w-full animate-fade-in">
+            <h2 id="head" class="text-5xl font-extrabold text-center mb-8 text-[#67E8F9] leading-tight animate-pulse-slow">
+                Submit for Stage: <span class="text-white">{{ stage[0] }}</span>
+            </h2>
+
+            <form method="POST" enctype="multipart/form-data" class="space-y-6">
+                <div>
+                    <label for="submission_text" class="block text-gray-300 text-lg font-medium mb-2">Submission Text:</label>
+                    <textarea
+                        id="submission_text"
+                        name="submission_text"
+                        rows="6"
+                        class="w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:ring-2 focus:ring-[#67E8F9] focus:border-transparent transition duration-200"
+                        placeholder="Enter your submission text here..."
+                    ></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-gray-300 text-lg font-medium mb-4">Upload File (PDF/PPT/PPTX):</label>
+                    <div class="flex items-center space-x-4">
+                        <div class="custom-file-upload" id="custom-file-upload-area">
+                            <i class="fas fa-plus"></i>
+                            <span class="text-gray-400 text-sm mt-2">Click to Upload</span>
+                        </div>
+                        <input
+                            id="submission_file"
+                            type="file"
+                            name="submission_file"
+                            accept=".pdf,.ppt,.pptx"
+                            required
+                        >
+                        <span id="file-name-display" class="text-gray-400 text-md italic">No file chosen</span>
+                    </div>
+                </div>
+
+                <button
+                    type="submit"
+                    class="w-full bg-[#67E8F9] text-gray-900 font-bold py-3 rounded-lg hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:shadow-[#67E8F9]/40"
+                >
+                    Submit
+                </button>
+            </form>
+
+            <p id="active" class="text-center text-gray-500 text-sm mt-8">
+                <i class="fa-solid fa-circle-info mr-2"></i> Note : You can submit only one time.
+            </p>
+        </div>
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const customUploadArea = document.getElementById('custom-file-upload-area');
+            const fileInput = document.getElementById('submission_file');
+            const fileNameDisplay = document.getElementById('file-name-display');
+
+            // Trigger click on hidden file input when custom area is clicked
+            customUploadArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            // Update file name display when a file is selected
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length > 0) {
+                    fileNameDisplay.textContent = fileInput.files[0].name;
+                } else {
+                    fileNameDisplay.textContent = 'No file chosen';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

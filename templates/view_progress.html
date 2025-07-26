@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Per-Stage Progress</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000000; /* Black background */
+            margin: 0;
+            min-height: 100vh;
+            color: #E5E7EB; /* Light gray for general text */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Custom animations */
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 3s infinite ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        /* Button Hover Effects */
+        .button-hover-animation:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(103, 232, 249, 0.4);
+        }
+
+        /* Table specific styling */
+        .table-container {
+            overflow-x: auto; /* Enable horizontal scrolling for table on small screens */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+            border-radius: 0.75rem; /* Match card border-radius */
+            border: 1px solid #1F2937; /* Subtle border for the container */
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: separate; /* Allows border-radius on cells */
+            border-spacing: 0; /* Remove space between cells */
+        }
+
+        .table th,
+        .table td {
+            padding: 1rem 1.25rem;
+            text-align: left;
+            border-bottom: 1px solid #1F2937; /* Darker border for rows */
+        }
+
+        .table th {
+            background-color: #1a1a1a; /* Darker header background */
+            color: #67E8F9; /* Accent color for headers */
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.875rem; /* text-sm */
+            letter-spacing: 0.05em;
+        }
+
+        .table tbody tr:last-child td {
+            border-bottom: none; /* No border for the last row */
+        }
+
+        .table tbody tr:nth-child(odd) {
+            background-color: #0a0a0a; /* Slightly different background for odd rows */
+        }
+
+        .table tbody tr:nth-child(even) {
+            background-color: #111827; /* Tailwind's gray-900 equivalent */
+        }
+
+        .table tbody tr:hover {
+            background-color: #1F2937; /* Hover effect for rows */
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .status-completed {
+            color: #34D399; /* Green for completed */
+            font-weight: 500;
+        }
+
+        .status-pending {
+            color: #FBBF24; /* Yellow for pending */
+            font-weight: 500;
+        }
+
+        .status-not-submitted {
+            color: #EF4444; /* Red for not submitted */
+            font-weight: 500;
+        }
+
+        .download-link {
+            color: #67E8F9;
+            text-decoration: underline;
+            margin-left: 0.5rem;
+            font-size: 0.875rem; /* text-sm */
+            transition: color 0.2s ease-in-out;
+        }
+        .download-link:hover {
+            color: #4FD1C5;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="bg-gray-900 p-4 shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <span id="logo" class="text-[#67E8F9] text-3xl font-extrabold tracking-wide">Code Forge - Progress</span>
+            <a id="b3" href="{{ url_for(session['role'] + '_dashboard') }}"> {# Dynamically set dashboard link #}
+                <button class="bg-[#EF4444] text-white px-6 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-md hover:shadow-[#EF4444]/40">
+                    <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+                </button>
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mx-auto py-12 px-4 sm:px-6 lg:px-8 animate-fade-in">
+        <h2 class="text-5xl font-extrabold text-center mb-10 text-[#67E8F9] leading-tight animate-pulse-slow">
+            Per-Stage Progress
+        </h2>
+
+        <div class="bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-800">
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>College</th>
+                            <th>Roll No</th>
+                            {% for stage in stages %}
+                            <th>{{ stage }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if progress %}
+                            {% for user in progress %}
+                            <tr>
+                                <td class="font-semibold text-white">{{ user.name }}</td>
+                                <td class="text-gray-300">{{ user.email }}</td>
+                                <td class="text-gray-300">{{ user.college }}</td>
+                                <td class="text-gray-300">{{ user.roll_no }}</td>
+                                {% for stage in stages %}
+                                <td>
+                                    <span class="
+                                        {% if user.stage_status[stage].status == 'Completed' %}status-completed
+                                        {% elif user.stage_status[stage].status == 'Pending' %}status-pending
+                                        {% else %}status-not-submitted{% endif %}
+                                    ">
+                                        {{ user.stage_status[stage].status }}
+                                    </span>
+                                    {% if user.stage_status[stage].file %}
+                                    <a href="{{ url_for('download_submission', filename=user.stage_status[stage].file) }}"
+                                        target="_blank" class="download-link">
+                                        <i class="fas fa-download ml-1"></i> Download
+                                    </a>
+                                    {% endif %}
+                                    {% if user.stage_status[stage].submitted_on %}
+                                    <p class="text-gray-500 text-xs mt-1">On: {{ user.stage_status[stage].submitted_on }}</p>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="{{ 4 + stages|length }}" class="text-center text-gray-400 py-4">No progress data available.</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

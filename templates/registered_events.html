@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Registered Events</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000000; /* Black background */
+            margin: 0;
+            min-height: 100vh;
+            color: #E5E7EB; /* Light gray for general text */
+        }
+
+        /* Custom animation for button hover */
+        .button-hover-animation:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(103, 232, 249, 0.4);
+        }
+
+        /* Custom animation for card hover */
+        .event-detail-card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(103, 232, 249, 0.2); /* #67E8F9 with transparency */
+        }
+
+        /* Keyframe for pulse animation for heading */
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .animate-pulse-slow {
+            animation: pulse-slow 3s infinite ease-in-out;
+        }
+
+        /* Subtle fade-in for event detail cards */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        /* Preserve pre-formatted text styling */
+        pre {
+            white-space: pre-wrap; /* Ensures text wraps within the container */
+            word-wrap: break-word; /* Breaks long words */
+            font-family: 'Inter', sans-serif; /* Use Inter for pre too */
+        }
+        /* Event Image sizing for consistency */
+        .event-image {
+            width: 100%;
+            height: 200px; /* Fixed height for consistency */
+            object-fit: cover; /* Cover the area, cropping if necessary */
+            border-radius: 0.5rem 0.5rem 0 0; /* Rounded top corners */
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="bg-gray-900 p-4 shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <!-- Club Logo/Title -->
+            <a href="#" id="logo" class="text-[#67E8F9] text-3xl font-extrabold tracking-wide">Code Forge</a>
+            <!-- Back to Dashboard Button -->
+            <a href="{{ url_for('student_dashboard') }}">
+                <button class="bg-[#EF4444] text-white px-6 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-md hover:shadow-[#EF4444]/40">
+                    Back to Dashboard
+                </button>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Registered Events Section -->
+    <section class="py-16 px-4 sm:px-6 lg:px-8">
+        <div class="container mx-auto">
+            <h2 class="text-5xl font-extrabold text-center mb-12 text-[#67E8F9] leading-tight animate-pulse-slow">
+                My Registered Events
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-10">
+                {% if events %}
+                    {% for event in events %}
+                    <div class="bg-gray-900 p-8 rounded-xl shadow-lg border border-gray-800 transition-all duration-300 event-detail-card-hover animate-fade-in">
+                        <h3 id="head" class="text-3xl font-bold text-white mb-4">
+                            <span class="text-[#67E8F9] mr-2">Event :</span> {{ event.title }}
+                        </h3>
+                        {% if event.image_path %}
+                        <img src="{{ url_for('static', filename=event.image_path) }}" alt="Event Image"
+                             class="event-image mb-6">
+                        {% else %}
+                        <img src="https://placehold.co/600x400/1F2937/67E8F9?text=No+Image" alt="No Image"
+                             class="event-image mb-6">
+                        {% endif %}
+
+                        <ul class="list-none space-y-4 text-gray-300 text-lg">
+                            <li>
+                                <strong class="text-white">Description :</strong>
+                                <pre class="mt-2 p-3 bg-gray-800 rounded-md border border-gray-700 text-gray-400 text-base overflow-auto">{{ event.description }}</pre>
+                            </li>
+                            <li>
+                                <strong class="text-white">Deadline :</strong> <span class="text-[#EF4444]">{{ event.date }}</span>
+                            </li>
+                            <!-- Removed generic submission/file/submitted_on as they are now per-stage -->
+
+                            <li>
+                                <strong class="text-white">Stages :</strong>
+                                <ul class="list-none ml-4 mt-2 space-y-3">
+                                    {% if event.stages %}
+                                        {% for stage in event.stages %}
+                                        <li class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow-sm">
+                                            <div class="flex justify-between items-center mb-2">
+                                                <span class="text-white font-semibold text-xl">{{ stage.stage_title }}</span>
+                                                <span class="text-gray-400 text-sm">Deadline: {{ stage.deadline }}</span>
+                                            </div>
+                                            <div class="text-gray-300 text-base space-y-1">
+                                                {% if stage.status == 'Submitted' %}
+                                                    <p><strong class="text-white">Status:</strong> <span class="text-green-400 font-semibold">Submitted</span></p>
+                                                    {% if stage.submission_text %}
+                                                    <p><strong class="text-white">Text:</strong> <span class="text-gray-400">{{ stage.submission_text }}</span></p>
+                                                    {% endif %}
+                                                    {% if stage.submission_file %}
+                                                    <p><strong class="text-white">File:</strong>
+                                                        <a href="{{ url_for('download_submission', filename=stage.submission_file) }}" class="text-[#67E8F9] hover:underline transition duration-200 ml-2">
+                                                            <i class="fas fa-download mr-1"></i> Download
+                                                        </a>
+                                                    </p>
+                                                    {% else %}
+                                                    <p><strong class="text-white">File:</strong> <span class="text-gray-500">No file uploaded</span></p>
+                                                    {% endif %}
+                                                    <p><strong class="text-white">Submitted On:</strong> <span class="text-gray-400">{{ stage.submitted_on }}</span></p>
+                                                {% else %}
+                                                    <p><strong class="text-white">Status:</strong> <span class="text-[#EF4444] font-semibold">Not Submitted</span></p>
+                                                    <p class="text-gray-500">No submission found for this stage.</p>
+                                                {% endif %}
+                                            </div>
+                                            <div class="mt-4 text-center">
+                                                <a href="{{ url_for('submit_stage', event_id=event.id, stage_id=stage.id) }}">
+                                                    <button class="bg-[#67E8F9] text-gray-900 px-6 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-md hover:shadow-[#67E8F9]/40">
+                                                        <i class="fas fa-upload mr-2"></i> Submit / View
+                                                    </button>
+                                                </a>
+                                            </div>
+                                        </li>
+                                        {% endfor %}
+                                    {% else %}
+                                        <li class="text-gray-400">No stages defined for this event.</li>
+                                    {% endif %}
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="col-span-full text-center text-gray-400 text-lg mt-8">
+                    <p>No registered events found.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+</body>
+</html>

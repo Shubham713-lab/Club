@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Forge - Home</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000000; /* Black background */
+            margin: 0;
+            min-height: 100vh;
+            color: #E5E7EB; /* Light gray for general text */
+            display: flex;
+            flex-direction: column; /* For sticky footer */
+            /* Background light effect */
+            background: linear-gradient(45deg, #000000, #0a0a0a, #000000);
+            background-size: 400% 400%;
+            animation: gradientShift 20s ease infinite;
+        }
+
+        /* Ensure main content pushes footer down */
+        .content-wrapper {
+            flex-grow: 1;
+        }
+
+        /* Custom animations */
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 3s infinite ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.5); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .qr-code-hidden {
+            opacity: 0;
+            transform: scale(0.5);
+            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+            pointer-events: none;
+        }
+        .qr-code-visible {
+            opacity: 1;
+            transform: scale(1);
+            animation: scaleIn 0.4s ease-out forwards;
+            pointer-events: auto;
+        }
+
+        /* Button/Card Hover Effects */
+        .button-hover-animation:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(103, 232, 249, 0.4);
+        }
+        .event-card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(103, 232, 249, 0.2);
+        }
+        .room-card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(103, 232, 249, 0.2);
+        }
+        .icon-hover:hover {
+            transform: translateY(-3px) scale(1.1);
+            color: #67E8F9;
+            text-shadow: 0 0 10px rgba(103, 232, 249, 0.6);
+        }
+
+        /* Hero Section Specific */
+        .hero-image {
+            width: 100%;
+            height: auto; /* Changed to auto to maintain aspect ratio */
+            max-height: 400px; /* Set a max height to control overall size */
+            object-fit: contain; /* Changed from cover to contain */
+            border-radius: 1.5rem; /* Rounded corners */
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .animate-slide-in-right {
+            animation: slideInRight 0.8s ease-out forwards;
+            animation-delay: 0.5s; /* Delay to appear after text */
+            opacity: 0; /* Start hidden */
+        }
+
+        /* New: Bouncing effect for hero image */
+        @keyframes bounceEffect {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); } /* Adjust bounce height */
+        }
+        .animate-bounce-effect {
+            animation: bounceEffect 3s ease-in-out infinite; /* Subtle, continuous bounce */
+        }
+
+        /* New: Background light effect */
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="bg-gray-900 p-4 shadow-lg sticky top-0 z-50">
+            <div class="container mx-auto flex justify-between items-center">
+                <!-- Club Logo -->
+                <div class="flex items-center space-x-3">
+                    <a href="#" class="text-[#67E8F9] text-2xl font-extrabold flex items-center">
+                        <!-- Simple SVG for a modern logo placeholder -->
+                        <svg class="w-8 h-8 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                        </svg>
+                        Code Forge
+                    </a>
+                </div>
+
+                <!-- Desktop Navigation Links -->
+                <div class="hidden md:flex space-x-8 items-center">
+                    <a href="{{ url_for('student_registered_events') }}"
+                        class="text-gray-300 hover:text-[#67E8F9] transition duration-300 ease-in-out nav-link-hover">Registered
+                        Events</a>
+                    <a href="{{ url_for('brainstorm') }}"
+                        class="text-gray-300 hover:text-[#67E8F9] transition duration-300 ease-in-out nav-link-hover">Brainstorming
+                        Ideas</a>
+                    <a href="{{ url_for('login') }}"
+                        class="bg-[#EF4444] text-white px-5 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out logout-link-hover shadow-md hover:shadow-[#EF4444]/40">Login</a>
+                </div>
+
+                <!-- Mobile Menu Button (Hamburger) -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="hamburger-icon focus:outline-none">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Navigation Links (Hidden by default) -->
+            <div id="mobile-menu" class="mobile-menu md:hidden bg-gray-800 py-4 mt-4 rounded-b-lg">
+                <div class="flex flex-col items-center space-y-4">
+                    <a href="{{ url_for('student_registered_events') }}"
+                        class="block text-gray-300 hover:text-[#67E8F9] transition duration-300 ease-in-out nav-link-hover">Registered
+                        Events</a>
+                    <a href="{{ url_for('brainstorm') }}"
+                        class="block text-gray-300 hover:text-[#67E8F9] transition duration-300 ease-in-out nav-link-hover">Brainstorming
+                        Ideas</a>
+                    <a href="{{ url_for('login') }}"
+                        class="block bg-[#EF4444] text-white px-5 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out logout-link-hover shadow-md hover:shadow-[#EF4444]/40 w-max">Login</a>
+                </div>
+            </div>
+        </nav>
+
+    <div class="content-wrapper">
+        <!-- Hero Section -->
+        <section class="py-16 px-4 sm:px-6 lg:px-8 bg-black text-white animate-fade-in">
+            <div class="container mx-auto flex flex-col md:flex-row items-center justify-between gap-10">
+                <div class="md:w-1/2 text-center md:text-left">
+                    <h1 class="text-6xl font-extrabold mb-6 text-[#67E8F9] leading-tight animate-pulse-slow">
+                        Unleash Your Coding Potential
+                    </h1>
+                    <p class="text-xl text-gray-300 mb-8">
+                        Code Forge is your gateway to a vibrant community of innovators, researchers, and tech enthusiasts. Enhance your skills, collaborate on projects, and build the future with us.
+                    </p>
+                    <a href="{{ url_for('login') }}" class="inline-block animate-slide-in-right">
+                        <button class="bg-[#67E8F9] text-gray-900 px-10 py-4 rounded-lg font-bold text-xl hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:shadow-[#67E8F9]/40">
+                            <i class="fas fa-users mr-3"></i> Join Our Community
+                        </button>
+                    </a>
+                </div>
+                <div class="md:w-1/2 flex justify-center md:justify-end">
+                    <img
+                        src="/static/robo.png"
+                        alt="Code Forge Community"
+                        class="hero-image rounded-3xl shadow-2xl transform transition-all duration-300 hover:scale-105 animate-bounce-effect"
+                        onerror="this.onerror=null;this.src='https://placehold.co/600x400/1F2937/67E8F9?text=Image+Error';"
+                    >
+                </div>
+            </div>
+        </section>
+
+        <!-- Upcoming Events Section -->
+        <section class="py-16 px-4 sm:px-6 lg:px-8 bg-black">
+            <div class="container mx-auto">
+                <h2 class="text-5xl font-extrabold text-center mb-12 text-[#67E8F9] leading-tight animate-pulse-slow">
+                    Upcoming Events
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                    {% if events %}
+                        {% for event in events %}
+                        <div class="bg-gray-900 rounded-xl shadow-lg overflow-hidden border border-gray-800 transition-all duration-300 event-card-hover">
+                            {% if event[5] %}
+                            <img
+                                src="{{ url_for('static', filename=event[5]) }}"
+                                alt="{{ event[1] }} Event Image"
+                                class="w-full h-48 object-cover rounded-t-lg"
+                                onerror="this.onerror=null;this.src='https://placehold.co/600x400/1F2937/67E8F9?text=Image+Error';"
+                            >
+                            {% else %}
+                            <img
+                                src="https://placehold.co/600x400/1F2937/67E8F9?text=Code+Forge"
+                                alt="No Image"
+                                class="w-full h-48 object-cover rounded-t-lg"
+                            >
+                            {% endif %}
+                            <div class="p-6">
+                                <h3 class="text-3xl font-bold text-white mb-2">{{ event[1] }}</h3>
+                                <p class="text-[#EF4444] text-sm mb-4"><i class="fa-regular fa-calendar-days mr-2"></i>  {{ event[3] }}</p>
+                                <p id="short" class="text-gray-300 text-base leading-relaxed mb-6">
+                                    {{ event[4] }}
+                                </p>
+                                <a href="{{ url_for('event_detail', event_id=event[0]) }}" class="block">
+                                    <button class="w-full bg-[#67E8F9] text-gray-900 font-bold py-3 rounded-lg hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:shadow-[#67E8F9]/40">
+                                        Know More
+                                    </button>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="col-span-full text-center text-gray-400 text-lg mt-8">
+                        <p>No events available.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <!-- Brainstorming Banner Section -->
+        <section class="py-16 px-4 sm:px-6 lg:px-8 bg-gray-900 text-white animate-fade-in">
+            <div class="container mx-auto text-center">
+                <h2 class="text-5xl font-extrabold mb-6 text-[#67E8F9] leading-tight animate-pulse-slow">
+                    Spark Your Next Big Idea!
+                </h2>
+                <p class="text-xl text-gray-300 mb-10 max-w-3xl mx-auto">
+                    Collaborate with fellow coders, share innovative concepts, and bring your wildest ideas to life in dedicated brainstorming rooms.
+                </p>
+                <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 mb-12 transform transition-all duration-300 hover:scale-[1.01] hover:shadow-xl">
+                    <h3 class="text-3xl font-bold text-white mb-4">Ready to Innovate?</h3>
+                    <p class="text-lg text-gray-400 mb-6">
+                        It's simple! Just head over to the <span class="text-[#67E8F9] font-semibold">Brainstorming Ideas</span> page, enter a title for your room, and click "Create Room" to start a discussion.
+                    </p>
+                    <a href="{{ url_for('brainstorm') }}" class="inline-block">
+                        <button class="bg-[#EF4444] text-white px-8 py-3 rounded-lg font-bold text-xl hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:shadow-[#EF4444]/40">
+                            <i class="fas fa-lightbulb mr-3"></i> Go to Brainstorming Hub
+                        </button>
+                    </a>
+                </div>
+                <h3 class="text-4xl font-extrabold mb-10 text-[#67E8F9] leading-tight">
+                    Explore Featured Idea Rooms
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-md border border-gray-700 transition-all duration-300 room-card-hover">
+                        <i class="fas fa-code text-[#67E8F9] text-4xl mb-4"></i>
+                        <h4 class="text-xl font-semibold text-white mb-2">Future of Web Dev</h4>
+                        <p class="text-gray-400 text-sm">Discussing latest frameworks & trends.</p>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-md border border-gray-700 transition-all duration-300 room-card-hover">
+                        <i class="fas fa-robot text-[#EF4444] text-4xl mb-4"></i>
+                        <h4 class="text-xl font-semibold text-white mb-2">AI in Everyday Life</h4>
+                        <p class="text-gray-400 text-sm">Exploring practical AI applications.</p>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-md border border-gray-700 transition-all duration-300 room-card-hover">
+                        <i class="fas fa-gamepad text-[#67E8F9] text-4xl mb-4"></i>
+                        <h4 class="text-xl font-semibold text-white mb-2">Game Dev Challenges</h4>
+                        <p class="text-gray-400 text-sm">Brainstorming solutions for common hurdles.</p>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-md border border-gray-700 transition-all duration-300 room-card-hover">
+                        <i class="fas fa-cloud text-[#EF4444] text-4xl mb-4"></i>
+                        <h4 class="text-xl font-semibold text-white mb-2">Decentralized Apps</h4>
+                        <p class="text-gray-400 text-sm">Dive into blockchain & DApp concepts.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Event Winners Section -->
+        <section class="py-16 px-4 sm:px-6 lg:px-8 bg-black">
+            <div class="container mx-auto">
+                <h3 class="text-5xl font-extrabold text-center mb-12 text-[#67E8F9] leading-tight animate-pulse-slow">
+                    Event Winners
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                    {% if results %}
+                        {% for event, winners in results.items() %}
+                        <div class="bg-gray-900 p-8 rounded-xl shadow-lg border border-gray-800 animate-fade-in">
+                            <strong class="text-3xl font-bold text-white mb-4 block">
+                                {{ event }}
+                            </strong>
+                            <ul class="list-none space-y-3">
+                                {% for winner in winners %}
+                                <li class="flex items-center text-gray-300 text-lg">
+                                    <span class="w-2 h-2 bg-[#67E8F9] rounded-full mr-3 flex-shrink-0"></span>
+                                    <span class="font-semibold text-white">{{ winner[0] }}</span>:
+                                    <span class="ml-1 text-gray-400">{{ winner[1] }}</span>
+                                    {% if winner[2] %}
+                                    <span class="text-gray-500 ml-1">({{ winner[2] }})</span>
+                                    {% endif %}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="col-span-full text-center text-gray-400 text-lg mt-8">
+                        <p>No winners announced yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <!-- Donation Banner Section -->
+        <section class="py-16 px-4 sm:px-6 lg:px-8 bg-gray-900 text-white animate-fade-in">
+            <div class="container mx-auto text-center">
+                <h2 class="text-5xl font-extrabold mb-6 text-[#67E8F9] leading-tight animate-pulse-slow">
+                    Support Our Vision!
+                </h2>
+                <p class="text-xl text-gray-300 mb-10 max-w-3xl mx-auto">
+                    "The best way to predict the future is to create it. Your contribution fuels our innovation and empowers the next generation of coders."
+                </p>
+                <div class="bg-gray-800 p-6 rounded-xl shadow-lg mb-12 transform transition-all duration-300 hover:scale-[1.01] hover:shadow-xl">
+                    <h3 class="text-3xl font-bold text-white mb-4">Make a Difference Today!</h3>
+                    <p class="text-lg text-gray-400 mb-6">
+                        Every contribution, big or small, helps us organize more events, provide better resources, and foster a thriving coding community.
+                    </p>
+                    <button
+                        id="donateButton"
+                        class="bg-[#EF4444] text-white px-8 py-3 rounded-lg font-bold text-xl hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:shadow-[#EF4444]/40"
+                    >
+                        <i class="fas fa-heart mr-3"></i> Donate Now
+                    </button>
+                    <div id="qrCodeContainer" class="mt-8 qr-code-hidden flex flex-col items-center">
+                        <p class="text-gray-300 text-lg mb-4">Scan to Donate:</p>
+                        <img
+                            src="https://placehold.co/200x200/1F2937/67E8F9?text=QR+Code"
+                            alt="Donation QR Code"
+                            class="max-w-xs h-auto rounded-lg shadow-xl"
+                            onerror="this.onerror=null;this.src='https://placehold.co/200x200/1F2937/EF4444?text=QR+Error';"
+                        >
+                        <p class="text-gray-400 text-sm mt-4">Thank you for your generosity!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Us Section -->
+        <section class="py-16 px-4 sm:px-6 lg:px-8 bg-black animate-fade-in">
+            <div class="container mx-auto text-center max-w-4xl">
+                <h2 class="text-5xl font-extrabold mb-6 text-[#67E8F9] leading-tight animate-pulse-slow">
+                    About Code Forge
+                </h2>
+                <p class="text-xl text-gray-300 mb-10">
+                    Code Forge is a dynamic coding and innovation-focused technical club dedicated to enhancing coding culture and nurturing student-led initiatives.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                    <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
+                        <i class="fas fa-eye text-[#EF4444] text-5xl mb-4"></i>
+                        <h3 class="text-3xl font-bold text-white mb-4">Our Vision</h3>
+                        <p class="text-lg text-gray-400">
+                            To foster a competitive and creative coding culture that empowers students to become innovators and researchers, shaping the future of technology.
+                        </p>
+                    </div>
+                    <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
+                        <i class="fas fa-rocket text-[#67E8F9] text-5xl mb-4"></i>
+                        <h3 class="text-3xl font-bold text-white mb-4">Our Mission</h3>
+                        <p class="text-lg text-gray-400">
+                            To engage students in structured learning through coding challenges, workshops, and collaborative projects, culminating in the launch of startup prototypes or the submission of Q1-level research papers.
+                        </p>
+                    </div>
+                </div>
+                <p class="text-lg text-gray-400 max-w-2xl mx-auto">
+                    We aim to build real-world tech skills, foster an innovation and research mindset, and position our department as a hub of coding and startup excellence.
+                </p>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer Section -->
+    <footer class="bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 text-gray-400 border-t border-gray-800">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center text-center md:text-left space-y-8 md:space-y-0">
+            <div class="flex flex-col items-center md:items-start">
+                <a href="#" class="text-[#67E8F9] text-3xl font-extrabold tracking-wide mb-2">Code Forge</a>
+                <p class="text-sm">Innovating the future, one line of code at a time.</p>
+            </div>
+            <div class="flex flex-col items-center md:items-start space-y-2">
+                <h4 class="text-lg font-semibold text-white mb-2">Quick Links</h4>
+                <a href="#" class="hover:text-[#67E8F9] transition duration-200">Upcoming Events</a>
+                <a href="#" class="hover:text-[#67E8F9] transition duration-200">Brainstorming Ideas</a>
+                <a href="#" class="hover:text-[#67E8F9] transition duration-200">My Profile</a>
+                <a href="#" class="hover:text-[#67E8F9] transition duration-200">About Us</a>
+            </div>
+            <div class="flex flex-col items-center md:items-start">
+                <h4 class="text-lg font-semibold text-white mb-2">Connect With Us</h4>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-400 text-2xl icon-hover transition duration-300">
+                        <i class="fab fa-facebook"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 text-2xl icon-hover transition duration-300">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 text-2xl icon-hover transition duration-300">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 text-2xl icon-hover transition duration-300">
+                        <i class="fab fa-linkedin"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 text-2xl icon-hover transition duration-300">
+                        <i class="fab fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="container mx-auto mt-10 pt-8 border-t border-gray-800 text-center text-sm text-gray-500">
+            &copy; 2025 Code Forge Club. All rights reserved.
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // JavaScript for mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('open');
+            mobileMenuButton.classList.toggle('open');
+        });
+            // Donation Button Logic
+            const donateButton = document.getElementById('donateButton');
+            const qrCodeContainer = document.getElementById('qrCodeContainer');
+
+            if (donateButton && qrCodeContainer) {
+                donateButton.addEventListener('click', () => {
+                    if (qrCodeContainer.classList.contains('qr-code-hidden')) {
+                        qrCodeContainer.classList.remove('qr-code-hidden');
+                        qrCodeContainer.classList.add('qr-code-visible');
+                    } else {
+                        qrCodeContainer.classList.remove('qr-code-visible');
+                        qrCodeContainer.classList.add('qr-code-hidden');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

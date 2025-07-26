@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Details</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000000; /* Black background */
+            margin: 0;
+            min-height: 100vh;
+            color: #E5E7EB; /* Light gray for general text */
+        }
+
+        /* Custom animation for button hover */
+        .button-hover-animation:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(103, 232, 249, 0.4);
+        }
+
+        /* Keyframe for pulse animation for heading */
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .animate-pulse-slow {
+            animation: pulse-slow 3s infinite ease-in-out;
+        }
+
+        /* Subtle fade-in for the event detail card */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        /* Preserve pre-formatted text styling */
+        pre {
+            white-space: pre-wrap; /* Ensures text wraps within the container */
+            word-wrap: break-word; /* Breaks long words */
+            font-family: 'Inter', sans-serif; /* Use Inter for pre too */
+        }
+
+        /* Ensure images fill their container nicely */
+        .event-detail-image {
+            width: 100%;
+            height: auto; /* Allow height to adjust based on aspect ratio */
+            max-height: 350px; /* Still cap max height if needed */
+            object-fit: contain; /* Ensure entire image is visible */
+            background-color: #1a1a1a; /* A dark gray to fill empty space if image is smaller */
+            border-radius: 0.5rem; /* Match rounded-lg */
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="bg-gray-900 p-4 shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <!-- Club Logo/Title -->
+            <a href="#" id="logo" class="text-[#67E8F9] text-3xl font-extrabold tracking-wide">Code Forge</a>
+            <!-- Back to Dashboard Button -->
+            <a href="{{ url_for('student_dashboard') }}">
+                <button class="bg-[#EF4444] text-white px-6 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-md hover:shadow-[#EF4444]/40">
+                    Back to Dashboard
+                </button>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Event Detail Section -->
+    <section class="py-16 px-4 sm:px-6 lg:px-8">
+        <div class="container mx-auto">
+            <div class="bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-800 animate-fade-in">
+                <h2 id="head" class="text-5xl font-extrabold text-center mb-8 text-[#67E8F9] leading-tight animate-pulse-slow">
+                    Event : {{ event[1] }}
+                </h2>
+
+                <!-- Image and Details Container -->
+                <div class="flex flex-col md:flex-row items-start gap-8 mb-6">
+                    <!-- Image on Left -->
+                    <div class="md:w-1/2 flex-shrink-0">
+                        {% if event[5] %} {# Assuming image_path is at index 5 #}
+                        <img
+                            src="{{ url_for('static', filename=event[5]) }}"
+                            alt="{{ event[1] }} Event Image"
+                            class="event-detail-image rounded-lg"
+                            onerror="this.onerror=null;this.src='https://placehold.co/800x350/1F2937/67E8F9?text=Event+Image+Error';"
+                        >
+                        {% else %}
+                        <img
+                            src="https://placehold.co/600x400/1F2937/67E8F9?text=No+Image+Available"
+                            alt="No Image Available"
+                            class="event-detail-image rounded-lg"
+                        >
+                        {% endif %}
+                    </div>
+
+                    <!-- Description and Deadline on Right -->
+                    <div class="md:w-1/2 flex-grow space-y-6">
+                        <p id="long" class="text-gray-300 text-lg">
+                            <strong class="text-white">Description:</strong>
+                            <pre class="mt-2 p-4 bg-gray-800 rounded-md border border-gray-700 text-gray-400 text-base overflow-auto leading-relaxed">{{ event[2] }}</pre>
+                        </p>
+
+                        <p class="text-gray-300 text-lg flex items-center">
+                            <i class="fa-regular fa-calendar-days text-[#EF4444] mr-3 text-xl"></i>
+                            <strong class="text-white">Deadline :</strong> <span class="ml-2 text-[#EF4444]">{{ event[3] }}</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mt-8 text-center">
+                    {% if registered %}
+                    <p class="text-green-400 text-xl font-semibold mb-6 animate-fade-in">
+                        <i class="fa-solid fa-circle-check mr-2"></i> You are already registered for this event.
+                    </p>
+                    <a href="{{ url_for('student_registered_events') }}">
+                        <button class="bg-[#67E8F9] text-gray-900 px-8 py-3 rounded-lg font-bold hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:shadow-[#67E8F9]/40">
+                            Go to Registered Events
+                        </button>
+                    </a>
+                    {% else %}
+                    <form method="post">
+                        <button type="submit" class="bg-[#67E8F9] text-gray-900 px-8 py-3 rounded-lg font-bold hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:shadow-[#67E8F9]/40">
+                            Register for Event
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
+</body>
+</html>

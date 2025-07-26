@@ -1,0 +1,52 @@
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #000000;
+    /* Black background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    overflow: hidden;
+    /* Prevent scrollbar from animations */
+}
+
+/* Custom animation for input focus */
+.input-focus-animation:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.5);
+    /* #67E8F9 with transparency */
+    border-color: #67E8F9;
+}
+
+/* Custom animation for button hover */
+.button-hover-animation:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(103, 232, 249, 0.4);
+}
+
+/* Subtle background animation */
+.background-gradient-animation {
+    background: linear-gradient(45deg, #1a1a1a, #0a0a0a, #1a1a1a);
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.w-full {
+    margin-bottom: 5px;
+}
