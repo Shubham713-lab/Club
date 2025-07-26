@@ -356,6 +356,42 @@ def view_all_users():
     return render_template('view_all_users.html', users=all_users, mentors=all_mentors)
 
 
+@app.route('/delete_event/<int:event_id>', methods=['GET', 'POST']) # Often POST is safer for deletes, but GET for simple links is common
+def delete_event(event_id):
+    """Handles the deletion of an event and its associated data (stages, registrations, submissions, results)."""
+    if 'role' not in session or session['role'] != 'admin':
+        flash("Unauthorized access", "danger")
+        return redirect(url_for('login'))
+
+    conn = get_db_connection()
+    if conn is None:
+        flash("Database connection failed. Cannot delete event.", "danger")
+        return redirect(url_for('admin_dashboard'))
+
+    cur = conn.cursor()
+
+    try:
+        # Delete event results
+        cur.execute("DELETE FROM event_results WHERE event_title IN (SELECT title FROM events WHERE id = %s)", (event_id,))
+        
+        # event_stages, event_registrations, and submissions have ON DELETE CASCADE,
+        # so deleting the event should automatically delete its related entries.
+        # Just deleting the event itself should cascade.
+        cur.execute("DELETE FROM events WHERE id = %s", (event_id,))
+        
+        conn.commit()
+        flash("Event and all associated data deleted successfully!", "success")
+
+    except psycopg2.Error as e:
+        conn.rollback()
+        flash(f"Database error deleting event: {e}", "danger")
+        print(f"DELETE EVENT ERROR: {e}")
+    finally:
+        if cur: cur.close()
+        if conn: conn.close()
+
+    return redirect(url_for('admin_dashboard'))
+
 
 # ---------- Student Registration Step 1 ----------
 @app.route('/register_student', methods=['GET', 'POST'])
