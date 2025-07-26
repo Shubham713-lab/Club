@@ -5,9 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -150,7 +148,6 @@
 </head>
 
 <body>
-    <!-- Navigation Bar -->
     <nav class="bg-gray-900 p-4 shadow-lg sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
             <span id="logo" class="text-[#67E8F9] text-3xl font-extrabold tracking-wide">Code Forge - Admin</span>
@@ -173,9 +170,7 @@
 
     <div class="container mx-auto py-12 px-4 sm:px-6 lg:px-8 animate-fade-in">
 
-        <!-- Admin Dashboard - Main Sections (Add Event, Announce Winners) -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-            <!-- Left Column: Add New Event -->
             <section class="bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-800">
                 <h2 class="text-5xl font-extrabold text-center mb-10 text-[#67E8F9] leading-tight animate-pulse-slow">
                     Add New Event
@@ -237,9 +232,7 @@
                 </form>
             </section>
 
-            <!-- Right Column: Announce Winners -->
             <div class="flex flex-col space-y-8">
-                <!-- Announce Winners Section -->
                 <section class="bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-800">
                     <h3
                         class="text-5xl font-extrabold text-center mb-10 text-[#67E8F9] leading-tight animate-pulse-slow">
@@ -294,7 +287,6 @@
             </div>
         </div>
 
-        <!-- All Events Section (remains full width below the side-by-side forms) -->
         <section class="bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-800">
             <h3 class="text-5xl font-extrabold text-center mb-10 text-[#67E8F9] leading-tight animate-pulse-slow">
                 All Events
@@ -316,7 +308,6 @@
                             class="text-[#67E8F9]">{{ item.submitted }}</span></p>
 
                     <div class="mt-6 flex flex-wrap gap-3">
-                        <!-- Delete button now calls JavaScript function -->
                         <button onclick="showDeleteConfirm('{{ item.event[0] }}', '{{ item.event[1] }}')"
                             class="bg-[#EF4444] text-white px-5 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out delete-button-hover shadow-md hover:shadow-[#EF4444]/40">
                             <i class="fas fa-trash-alt mr-2"></i> Delete
@@ -335,7 +326,6 @@
 
     </div>
 
-    <!-- Custom Confirmation Modal -->
     <div id="deleteConfirmModal" class="modal-overlay">
         <div class="modal-content">
             <h4 class="text-2xl font-bold text-white mb-4">Confirm Deletion</h4>
@@ -355,8 +345,7 @@
     </div>
 
     <script>
-        // Store the base URL for delete_event from Jinja2
-        const deleteEventBaseUrl = "{{ url_for('delete_event', event_id='TEMP_ID') }}".replace('TEMP_ID', '');
+        // Removed: const deleteEventBaseUrl = "{{ url_for('delete_event', event_id='TEMP_ID') }}".replace('TEMP_ID', '');
 
         function addStage() {
             const container = document.getElementById('stages');
@@ -389,8 +378,9 @@
 
         confirmDeleteBtn.addEventListener('click', () => {
             if (currentEventIdToDelete) {
-                // Construct the full URL using the base URL and the actual event ID
-                window.location.href = deleteEventBaseUrl + currentEventIdToDelete;
+                // Correctly construct the URL for the delete_event endpoint
+                // Assuming your Flask app is served at the root of your domain.
+                window.location.href = `/delete_event/${currentEventIdToDelete}`;
             }
             hideDeleteConfirm();
         });

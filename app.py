@@ -317,9 +317,6 @@ def send_otp(receiver_email, otp):
 
     return False
 
-# app.py
-
-# ... (other imports and functions) ...
 
 @app.route('/view_all_users')
 def view_all_users():
