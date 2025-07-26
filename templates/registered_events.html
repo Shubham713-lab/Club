@@ -94,8 +94,9 @@
                         <h3 id="head" class="text-3xl font-bold text-white mb-4">
                             <span class="text-[#67E8F9] mr-2">Event :</span> {{ event.title }}
                         </h3>
-                        {% if event.image_path %}
-                        <img src="{{ url_for('static', filename=event.image_path) }}" alt="Event Image"
+                        {# Updated to use event.image_url from Cloudinary #}
+                        {% if event.image_url %}
+                        <img src="{{ event.image_url }}" alt="Event Image"
                              class="event-image mb-6">
                         {% else %}
                         <img src="https://placehold.co/600x400/1F2937/67E8F9?text=No+Image" alt="No Image"
@@ -128,9 +129,10 @@
                                                     {% if stage.submission_text %}
                                                     <p><strong class="text-white">Text:</strong> <span class="text-gray-400">{{ stage.submission_text }}</span></p>
                                                     {% endif %}
-                                                    {% if stage_details.submission_file_url %}
+                                                    {# Updated to use stage.submission_file_url from Cloudinary #}
+                                                    {% if stage.submission_file_url %}
                                                     <p><strong class="text-white">File:</strong>
-                                                        <a href="{{ stage_details.submission_file_url }}" target="_blank" class="text-[#67E8F9] hover:underline"><i class="fas fa-download mr-1"></i>Download File</a>
+                                                        <a href="{{ stage.submission_file_url }}" target="_blank" class="text-[#67E8F9] hover:underline"><i class="fas fa-download mr-1"></i>Download File</a>
                                                     </p>
                                                     {% else %}
                                                     <p><strong class="text-white">File:</strong> <span class="text-gray-500">No file uploaded</span></p>
