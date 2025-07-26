@@ -14,6 +14,12 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255) NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS admin (
+    id SERIAL PRIMARY KEY,
+    username TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL
+);
+
 -- mentors table
 CREATE TABLE IF NOT EXISTS mentors (
     user_id VARCHAR(8) PRIMARY KEY,

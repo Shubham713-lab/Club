@@ -20,9 +20,6 @@ from psycopg2.extras import DictCursor
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-admin_username = os.getenv("ADMIN_USER")
-admin_password = os.getenv("ADMIN_PASS")
-
 
 def get_db_connection():
     """Establishes a connection to the PostgreSQL database."""
@@ -218,53 +215,50 @@ def home():
 # ---------- Login ----------
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    """Handles user login for students, admins, and mentors."""
+    """Handles user login for admins, students, and mentors."""
     if request.method == 'POST':
         user_id = request.form.get('user_id')
         password = request.form.get('password')
 
-        # --- START: Hardcoded Admin Login (FOR TESTING ONLY) ---
-        if user_id == admin_username and password == admin_password:
-            session['user'] = "Hardcoded Admin" # Or any name you prefer for this hardcoded admin
-            session['user_id'] = admin_username
-            session['role'] = 'admin'
-            flash("Hardcoded Admin Login successful!", "success")
-            return redirect(url_for('dashboard'))
-        # --- END: Hardcoded Admin Login ---
-
-
         conn = get_db_connection()
         if conn is None:
+            flash("Database connection failed.", "danger")
             return render_template('login.html')
 
-        cur = conn.cursor(cursor_factory=DictCursor) # Use DictCursor for easier column access
+        cur = conn.cursor(cursor_factory=DictCursor)
 
         try:
-            # Try user from `users` table (this will now be for other users, as hardcoded admin is handled above)
+            # 1. Check in admin table
+            cur.execute("SELECT username, password FROM admin WHERE username = %s", (user_id,))
+            admin = cur.fetchone()
+            if admin and check_password_hash(admin['password'], password):
+                session['user'] = "Admin"
+                session['user_id'] = admin['username']
+                session['role'] = 'admin'
+                flash("Admin login successful!", "success")
+                return redirect(url_for('dashboard'))
+
+            # 2. Check in users table
             cur.execute("SELECT user_id, name, role, password FROM users WHERE user_id = %s", (user_id,))
             user = cur.fetchone()
+            if user and check_password_hash(user['password'], password):
+                session['user'] = user['name']
+                session['user_id'] = user['user_id']
+                session['role'] = user['role']
+                flash("Login successful!", "success")
+                return redirect(url_for('dashboard'))
 
-            if user:
-                hashed_password = user['password'] # Access by key
-                if check_password_hash(hashed_password, password):
-                    session['user'] = user['name']
-                    session['user_id'] = user['user_id']
-                    session['role'] = user['role']
-                    flash("Login successful!", "success")
-                    return redirect(url_for('dashboard'))
-            else:
-                # Try mentor from `mentors` table
-                cur.execute("SELECT user_id, name, password FROM mentors WHERE user_id = %s", (user_id,))
-                mentor = cur.fetchone()
+            # 3. Check in mentors table
+            cur.execute("SELECT user_id, name, password FROM mentors WHERE user_id = %s", (user_id,))
+            mentor = cur.fetchone()
+            if mentor and check_password_hash(mentor['password'], password):
+                session['user'] = mentor['name']
+                session['user_id'] = mentor['user_id']
+                session['role'] = 'mentor'
+                flash("Login successful!", "success")
+                return redirect(url_for('dashboard'))
 
-                if mentor and check_password_hash(mentor['password'], password): # Access by key
-                    session['user'] = mentor['name']
-                    session['user_id'] = mentor['user_id']
-                    session['role'] = 'mentor'
-                    flash("Login successful!", "success")
-                    return redirect(url_for('dashboard'))
-
-            flash("Invalid User ID or password", "danger")
+            flash("Invalid User ID or Password", "danger")
 
         except psycopg2.Error as e:
             flash(f"Database error during login: {e}", "danger")
@@ -274,6 +268,7 @@ def login():
             if conn: conn.close()
 
     return render_template('login.html')
+
 
 
 
