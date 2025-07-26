@@ -986,18 +986,23 @@ def download_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
 
 
+# app.py
+
+# ... (other imports and code) ...
+
 @app.route('/brainstorm', methods=['GET', 'POST'])
 def brainstorm():
     """Handles creation and listing of brainstorm rooms."""
-    if 'user_id' not in session or session['role'] != 'student':
+    # Allow both 'student' and 'mentor' roles to access this page
+    if 'user_id' not in session or session['role'] not in ['student', 'mentor']: # <--- MODIFIED THIS LINE
         flash("Unauthorized access", "danger")
         return redirect(url_for('login'))
 
     conn = get_db_connection()
     if conn is None:
+        flash("Database connection failed. Please contact support.", "danger")
         return render_template('brainstorm.html', rooms=[])
 
-    # Use DictCursor for fetching rooms
     cur = conn.cursor(cursor_factory=DictCursor)
     rooms_data = []
 
@@ -1006,9 +1011,8 @@ def brainstorm():
             room_title = request.form['room_title']
             room_id = str(uuid.uuid4())[:8]  # short unique ID (8 chars)
             created_by = session['user_id']
-            created_at = datetime.now() # psycopg2 handles datetime objects directly
+            created_at = datetime.now()
 
-            # Insert into brainstorm_rooms - use %s
             cur.execute('''
                 INSERT INTO brainstorm_rooms (room_id, title, created_by, created_at)
                 VALUES (%s, %s, %s, %s)
@@ -1018,9 +1022,8 @@ def brainstorm():
             flash("Room created! Share the invite link.", "success")
             return redirect(url_for('join_brainstorm_room', room_id=room_id))
 
-        # Fetch all rooms
         cur.execute('SELECT room_id, title, created_at FROM brainstorm_rooms ORDER BY created_at DESC')
-        rooms_data = cur.fetchall() # These are DictRows
+        rooms_data = cur.fetchall()
     except psycopg2.Error as e:
         conn.rollback()
         flash(f"Database error on brainstorm page: {e}", "danger")
@@ -1030,6 +1033,7 @@ def brainstorm():
         if conn: conn.close()
 
     return render_template('brainstorm.html', rooms=rooms_data)
+
 
 
 @app.route('/brainstorm/room/<room_id>')
