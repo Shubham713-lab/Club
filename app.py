@@ -8,7 +8,6 @@ from email.message import EmailMessage
 from smtplib import SMTPAuthenticationError, SMTPConnectError
 import random
 from flask import jsonify
-import os
 from werkzeug.utils import secure_filename
 from datetime import datetime
 from flask_socketio import SocketIO, join_room, leave_room, send, emit
@@ -21,15 +20,6 @@ from psycopg2.extras import DictCursor
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-conn = psycopg2.connect(DATABASE_URL, cursor_factory=DictCursor)
-
-# PostgreSQL Database connection details - MAKE SURE TO UPDATE DB_PASSWORD
-DB_NAME = "my_app_db"
-DB_USER = "myuser"
-DB_PASSWORD = "8080" # <--- IMPORTANT: REPLACE THIS WITH YOUR ACTUAL PASSWORD!
-DB_HOST = "localhost"
-DB_PORT = "5432" # Default PostgreSQL port
-
 # --- Hardcoded Admin Credentials (FOR DEMONSTRATION/TESTING ONLY - NOT RECOMMENDED FOR PRODUCTION) ---
 HARDCODED_ADMIN_USERNAME = "admin001"
 HARDCODED_ADMIN_PASSWORD = "admin123" # This is the plaintext password
@@ -39,13 +29,7 @@ HARDCODED_ADMIN_PASSWORD = "admin123" # This is the plaintext password
 def get_db_connection():
     """Establishes a connection to the PostgreSQL database."""
     try:
-        conn = psycopg2.connect(
-            database=DB_NAME,
-            user=DB_USER,
-            password=DB_PASSWORD,
-            host=DB_HOST,
-            port=DB_PORT
-        )
+        conn = psycopg2.connect(DATABASE_URL, cursor_factory=DictCursor)
         return conn
     except psycopg2.Error as e:
         # Flash a message to the user and print error for debugging
