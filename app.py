@@ -137,7 +137,8 @@ def home():
             print(f"HOME PAGE EVENTS ERROR: {e}")
             flash(f"Could not load events. Please try again.", "danger")
         finally:
-            conn.close()
+            if conn:
+                conn.close()
     return render_template('home.html', events=events)
 
 
@@ -402,19 +403,15 @@ def admin_dashboard():
                 image_path_for_db = None
                 if image_file and allowed_file(image_file.filename, ALLOWED_IMAGE_EXTENSIONS):
                     filename = secure_filename(image_file.filename)
-                    # Save image to the static/uploads directory
                     image_file.save(os.path.join(app.config['UPLOAD_IMAGE_FOLDER'], filename))
-                    # Store relative path for use in templates
                     image_path_for_db = os.path.join('uploads', filename)
 
-                # Insert event and get its new ID
                 cur.execute(
                     "INSERT INTO events (title, short_description, description, date, image_path) VALUES (%s, %s, %s, %s, %s) RETURNING id",
                     (request.form['title'], request.form['short_description'], request.form['description'], request.form['date'], image_path_for_db)
                 )
                 event_id = cur.fetchone()['id']
                 
-                # Insert associated stages
                 for title, deadline in zip(request.form.getlist('stage_title[]'), request.form.getlist('deadline[]')):
                     if title and deadline:
                         cur.execute("INSERT INTO event_stages (event_id, stage_title, deadline) VALUES (%s, %s, %s)", (event_id, title, deadline))
@@ -427,20 +424,24 @@ def admin_dashboard():
             cur.execute("SELECT * FROM events ORDER BY date DESC")
             events = cur.fetchall()
             for event in events:
-                cur.execute("SELECT COUNT(*) FROM event_registrations WHERE event_id = %s", (event['id'],))
-                registered_count = cur.fetchone()['count']
-                cur.execute("SELECT COUNT(DISTINCT user_id) FROM submissions WHERE event_id = %s", (event['id'],))
-                submitted_count = cur.fetchone()['count']
+                # FIX: Use explicit aliases (AS) for COUNT columns to prevent key errors.
+                cur.execute("SELECT COUNT(*) AS total_registered FROM event_registrations WHERE event_id = %s", (event['id'],))
+                registered_count = cur.fetchone()['total_registered']
+                
+                cur.execute("SELECT COUNT(DISTINCT user_id) AS total_submitted FROM submissions WHERE event_id = %s", (event['id'],))
+                submitted_count = cur.fetchone()['total_submitted']
+                
                 event_stats.append({'event': event, 'registered': registered_count, 'submitted': submitted_count})
         
         return render_template('admin_dashboard.html', event_stats=event_stats)
 
-    except Exception as e:
-        print(f"!!! UNHANDLED ERROR IN ADMIN DASHBOARD: {e} !!!")
+    except psycopg2.Error as e:
+        print(f"!!! DATABASE ERROR IN ADMIN DASHBOARD: {e} !!!")
         if conn:
             conn.rollback()
-        flash("An unexpected error occurred while loading the admin dashboard. Please contact support.", "danger")
-        return redirect(url_for('home'))
+        flash("A database error occurred while loading the admin dashboard.", "danger")
+        # Redirect to a safe page if the dashboard fails to load
+        return redirect(url_for('home')) 
     finally:
         if conn:
             conn.close()
