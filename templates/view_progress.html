@@ -166,8 +166,9 @@
                                     ">
                                         {{ user.stage_status[stage].status }}
                                     </span>
+                                    {# Updated to directly use the Cloudinary URL from user.stage_status[stage].file #}
                                     {% if user.stage_status[stage].file %}
-                                    <a href="{{ url_for('download_submission', filename=user.stage_status[stage].file) }}"
+                                    <a href="{{ user.stage_status[stage].file }}"
                                         target="_blank" class="download-link">
                                         <i class="fas fa-download ml-1"></i> Download
                                     </a>

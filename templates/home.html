@@ -189,6 +189,7 @@
                     </a>
                 </div>
                 <div class="md:w-1/2 flex justify-center md:justify-end">
+                    <!-- Hero image remains static for now, as it's a fixed asset. -->
                     <img
                         src="/static/robo.png"
                         alt="Code Forge Community"
@@ -209,9 +210,10 @@
                     {% if events %}
                         {% for event in events %}
                         <div class="bg-gray-900 rounded-xl shadow-lg overflow-hidden border border-gray-800 transition-all duration-300 event-card-hover">
+                            {# Updated to use event[5] which is now event.image_url #}
                             {% if event[5] %}
                             <img
-                                src="{{ url_for('static', filename=event[5]) }}"
+                                src="{{ event[5] }}"
                                 alt="{{ event[1] }} Event Image"
                                 class="w-full h-48 object-cover rounded-t-lg"
                                 onerror="this.onerror=null;this.src='https://placehold.co/600x400/1F2937/67E8F9?text=Image+Error';"
@@ -288,7 +290,7 @@
                     <div class="bg-gray-800 p-6 rounded-xl shadow-md border border-gray-700 transition-all duration-300 room-card-hover">
                         <i class="fas fa-cloud text-[#EF4444] text-4xl mb-4"></i>
                         <h4 class="text-xl font-semibold text-white mb-2">Decentralized Apps</h4>
-                        <p class="text-gray-400 text-sm">Dive into blockchain & DApp concepts.</p>
+                        <p class="text-400 text-sm">Dive into blockchain & DApp concepts.</p>
                     </div>
                 </div>
             </div>

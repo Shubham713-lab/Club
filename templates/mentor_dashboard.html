@@ -175,8 +175,9 @@
                 {% for event in events %}
                 <div
                     class="bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-700 transition-all duration-300 card-hover">
-                    {% if event.image_path %}
-                    <img src="{{ url_for('static', filename=event.image_path) }}" alt="Event Image" class="event-image">
+                    {# Updated to use event.image_url from Cloudinary #}
+                    {% if event.image_url %}
+                    <img src="{{ event.image_url }}" alt="Event Image" class="event-image">
                     {% else %}
                     <img src="https://placehold.co/600x400/1F2937/67E8F9?text=No+Image" alt="No Image"
                         class="event-image">
@@ -438,5 +439,4 @@
         });
     </script>
 </body>
-
 </html>
