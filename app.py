@@ -1,6 +1,6 @@
 import eventlet
 eventlet.monkey_patch()
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory, abort
+from flask import Flask, render_template, request, redirect, url_for, session, flash, abort
 from werkzeug.security import check_password_hash, generate_password_hash
 import uuid
 import smtplib
@@ -14,16 +14,14 @@ from flask_socketio import SocketIO, join_room, leave_room, send, emit
 from collections import defaultdict
 import cloudinary
 import cloudinary.uploader
+import cloudinary.api # You might not need this for basic uploads, but good to have
 
-# --- NEW: PostgreSQL Imports and Configuration ---
+# --- PostgreSQL Imports and Configuration ---
 import os
 import psycopg2
 from psycopg2.extras import DictCursor
 
-
-
 DATABASE_URL = os.getenv("DATABASE_URL")
-
 
 def get_db_connection():
     """Establishes a connection to the PostgreSQL database."""
@@ -31,14 +29,37 @@ def get_db_connection():
         conn = psycopg2.connect(DATABASE_URL, cursor_factory=DictCursor)
         return conn
     except psycopg2.Error as e:
-        # Flash a message to the user and print error for debugging
         flash(f"Database connection error: Please contact support. ({e})", "danger")
         print(f"DATABASE CONNECTION ERROR: {e}")
         return None
 
-# For persistence, you'd need to store this data in your PostgreSQL DB (e.g., in a brainstorm_files table)
-shared_files = {}
-rooms = {}
+app = Flask(__name__)
+socketio = SocketIO(app, async_mode='eventlet')
+# Use environment variable for secret key (best practice)
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'code_forge_123')
+
+# Cloudinary Configuration
+cloudinary.config(
+    cloud_name = os.environ.get('CLOUD_NAME'),
+    api_key = os.environ.get('API_KEY'),
+    api_secret = os.environ.get('API_SECRET')
+)
+
+# --- Removed local file storage folders (uploads, static/uploads, brainstorm_uploads) ---
+# All file uploads will now go to Cloudinary.
+
+# Allowed extensions for submissions and images (still good for client-side validation)
+ALLOWED_SUBMISSION_EXTENSIONS = {'pdf', 'ppt', 'pptx', 'doc', 'docx'} # Added doc/docx
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'} # Added webp
+
+def allowed_file(filename, allowed_extensions):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
+
+# --- Removed local download routes as files are now on Cloudinary ---
+# @app.route('/download_brainstorm_file/<path:filename>')
+# @app.route('/download_submission/<path:filename>')
+# @app.route('/download/<path:filename>')
+
 
 def get_user_by_id(user_id):
     """Fetches user data by user_id from the 'users' table."""
@@ -46,79 +67,19 @@ def get_user_by_id(user_id):
     if conn is None:
         return None
     
-    # Use DictCursor to get results as dictionaries for easier access
     cur = conn.cursor(cursor_factory=DictCursor)
-    
     try:
-        # Use %s placeholder for psycopg2
         cur.execute("SELECT user_id, name, college, roll_no, email, address, contact, role, year, branch, department, password FROM users WHERE user_id = %s", (user_id,))
         user_data = cur.fetchone()
-        
         if user_data:
-            # DictCursor already returns a dict-like object, convert to actual dict if needed
             return dict(user_data)
         return None
     except psycopg2.Error as e:
         print(f"Database error in get_user_by_id: {e}")
         return None
     finally:
-        if cur:
-            cur.close()
-        if conn:
-            conn.close()
-
-app = Flask(__name__)
-socketio = SocketIO(app, async_mode='eventlet')
-app.secret_key = 'shubham_secret_123'
-
-# ----------- for submission ------------
-UPLOAD_SUBMISSION_FOLDER = 'uploads'  # for files
-app.config['UPLOAD_SUBMISSION_FOLDER'] = UPLOAD_SUBMISSION_FOLDER
-ALLOWED_EXTENSIONS = {'pdf', 'ppt', 'pptx'}
-
-if not os.path.exists(UPLOAD_SUBMISSION_FOLDER):
-    os.makedirs(UPLOAD_SUBMISSION_FOLDER)
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-# ---------- for image --------------
-UPLOAD_IMAGE_FOLDER = os.path.join('static', 'uploads')  # for images
-if not os.path.exists(UPLOAD_IMAGE_FOLDER):
-    os.makedirs(UPLOAD_IMAGE_FOLDER)
-app.config['UPLOAD_IMAGE_FOLDER'] = UPLOAD_IMAGE_FOLDER
-ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-
-def allowed_image(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
-
-# Brainstorm Room Directory
-BRAINSTORM_FOLDER = 'brainstorm_uploads'
-if not os.path.exists(BRAINSTORM_FOLDER):
-    os.makedirs(BRAINSTORM_FOLDER)
-
-# --- RENAMED ROUTE FOR BRAINSTORM FILE DOWNLOAD (resolves conflict with download_submission) ---
-@app.route('/download_brainstorm_file/<path:filename>')
-def download_brainstorm_file(filename):
-    """Serves files uploaded in brainstorm rooms."""
-    print(f"DEBUG: Attempting to serve brainstorm file: {filename} from {BRAINSTORM_FOLDER}")
-    full_path = os.path.join(BRAINSTORM_FOLDER, filename)
-    if not os.path.isfile(full_path):
-        print(f"DEBUG: Brainstorm file not found: {full_path}")
-        abort(404)
-    return send_from_directory(BRAINSTORM_FOLDER, filename, as_attachment=True)
-
-
-# --- ROUTE FOR EVENT SUBMISSION DOWNLOAD (Original name kept for existing links) ---
-@app.route('/download_submission/<path:filename>')
-def download_submission(filename):
-    """Serves submission files for events."""
-    print(f"DEBUG: Attempting to serve submission file: {filename} from {app.config['UPLOAD_SUBMISSION_FOLDER']}")
-    full_path = os.path.join(app.config['UPLOAD_SUBMISSION_FOLDER'], filename)
-    if not os.path.isfile(full_path):
-        print(f"DEBUG: Submission file not found: {full_path}")
-        abort(404)
-    return send_from_directory(app.config['UPLOAD_SUBMISSION_FOLDER'], filename, as_attachment=True)
+        if cur: cur.close()
+        if conn: conn.close()
 
 
 # -------------- Handle Submission ------------
@@ -131,12 +92,11 @@ def submit_stage(event_id, stage_id):
 
     conn = get_db_connection()
     if conn is None:
-        return redirect(url_for('student_registered_events')) # Redirect on connection failure
+        return redirect(url_for('student_registered_events'))
 
     cur = conn.cursor()
 
     try:
-        # Get stage info - use %s
         cur.execute("SELECT stage_title, deadline FROM event_stages WHERE id = %s", (stage_id,))
         stage = cur.fetchone()
         if not stage:
@@ -145,13 +105,10 @@ def submit_stage(event_id, stage_id):
 
         stage_title, deadline = stage
 
-        # Check if deadline passed
-        # Assuming deadline from DB is already a datetime.date object or similar compatible with strftime
-        if datetime.now() > datetime.strptime(str(deadline), '%Y-%m-%d'): # Convert date object to string if needed
+        if datetime.now() > datetime.strptime(str(deadline), '%Y-%m-%d'):
             flash("Submission deadline has passed!", "danger")
             return redirect(url_for('student_registered_events'))
 
-        # Check if already submitted - use %s
         cur.execute("SELECT id FROM submissions WHERE user_id = %s AND event_id = %s AND stage_id = %s", 
                     (session['user_id'], event_id, stage_id))
         existing_submission = cur.fetchone()
@@ -160,24 +117,30 @@ def submit_stage(event_id, stage_id):
             flash("You have already submitted. Resubmission is not allowed.", "warning")
             return redirect(url_for('student_registered_events'))
 
-        # Allow submission only if not submitted yet
         if request.method == 'POST':
             submission_text = request.form.get('submission_text')
             file = request.files.get('submission_file')
 
-            file_path = None
-            if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                file_path = filename  # Store only the filename in DB
-                file.save(os.path.join(app.config['UPLOAD_SUBMISSION_FOLDER'], filename))
+            submission_file_url = None
+            if file and file.filename and allowed_file(file.filename, ALLOWED_SUBMISSION_EXTENSIONS):
+                try:
+                    # Upload to Cloudinary. resource_type='raw' for non-image files.
+                    upload_result = cloudinary.uploader.upload(file, resource_type="raw", folder="submissions") 
+                    submission_file_url = upload_result['secure_url']
+                except Exception as e:
+                    flash(f"Submission file upload failed: {e}", "danger")
+                    print(f"CLOUDINARY SUBMISSION UPLOAD ERROR: {e}")
+            elif file and file.filename and not allowed_file(file.filename, ALLOWED_SUBMISSION_EXTENSIONS):
+                 flash("Invalid file type. Only PDF, PPT, PPTX, DOC, DOCX allowed.", "danger")
+                 return render_template('submit_stage.html', stage=(stage_title, deadline), event_id=event_id, stage_id=stage_id)
 
-            # Insert into submissions - use %s
+
             cur.execute('''
-                INSERT INTO submissions (user_id, event_id, stage_id, submission_text, submission_file, submitted_on)
+                INSERT INTO submissions (user_id, event_id, stage_id, submission_text, submission_file_url, submitted_on)
                 VALUES (%s, %s, %s, %s, %s, %s)
             ''', (
-                session['user_id'], event_id, stage_id, submission_text, file_path,
-                datetime.now() # psycopg2 can handle datetime objects directly
+                session['user_id'], event_id, stage_id, submission_text, submission_file_url,
+                datetime.now()
             ))
 
             conn.commit()
@@ -185,7 +148,7 @@ def submit_stage(event_id, stage_id):
             return redirect(url_for('student_registered_events'))
 
     except psycopg2.Error as e:
-        conn.rollback() # Rollback changes if an error occurs
+        conn.rollback()
         flash(f"Database error during submission: {e}", "danger")
         print(f"SUBMISSION ERROR: {e}")
     finally:
@@ -201,11 +164,12 @@ def home():
     """Renders the home page with a list of events."""
     conn = get_db_connection()
     if conn is None:
-        return render_template('home.html', events=[]) # Pass empty list on failure
+        return render_template('home.html', events=[])
 
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=DictCursor) # Use DictCursor for fetching by name
     try:
-        cur.execute("SELECT id, title, description, date, short_description, image_path FROM events ORDER BY date DESC")
+        # Select image_url instead of image_path
+        cur.execute("SELECT id, title, description, date, short_description, image_url FROM events ORDER BY date DESC")
         events = cur.fetchall()
     except psycopg2.Error as e:
         flash(f"Error loading events: {e}", "danger")
@@ -274,13 +238,9 @@ def login():
     return render_template('login.html')
 
 
-
 # ---------- OTP Function ----------
 def send_otp(receiver_email, otp):
     """Sends an OTP to the specified email address."""
-    # It's recommended to set EMAIL_USER and EMAIL_PASS as environment variables
-    # Example: export EMAIL_USER="myemail@gmail.com"
-    # Example: export EMAIL_PASS="your_gmail_app_password"
     EMAIL_ADDRESS = os.environ.get("EMAIL_USER")
     EMAIL_PASSWORD = os.environ.get("EMAIL_PASS")
 
@@ -300,23 +260,19 @@ def send_otp(receiver_email, otp):
             smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
             smtp.send_message(msg)
         print(f"[SUCCESS] OTP sent to {receiver_email}")
-        flash("OTP sent to your email!", "info") # Flash message upon success
+        flash("OTP sent to your email!", "info")
         return True
 
     except SMTPAuthenticationError as e:
         print(f"[AUTH ERROR] Email or password incorrect. Use Gmail App Password if 2FA is enabled. Error: {e}")
         flash("Email sending failed: Authentication error. Check server logs.", "danger")
-
     except SMTPConnectError as e:
         print(f"[CONNECTION ERROR] Could not connect to the email server. Check server address, port, and network. Error: {e}")
         flash("Email sending failed: Connection error. Check server logs.", "danger")
-
     except Exception as e:
         print(f"[GENERAL ERROR] Failed to send OTP to {receiver_email}. Error: {e}")
         flash("Something went wrong while sending OTP. Please try again.", "danger")
-
     return False
-
 
 @app.route('/view_all_users')
 def view_all_users():
@@ -327,18 +283,16 @@ def view_all_users():
 
     conn = get_db_connection()
     if conn is None:
-        return render_template('view_all_users.html', users=[], mentors=[]) # Or redirect, depending on desired behavior
+        return render_template('view_all_users.html', users=[], mentors=[])
 
     cur = conn.cursor(cursor_factory=DictCursor)
     all_users = []
     all_mentors = []
 
     try:
-        # Fetch all students
         cur.execute("SELECT user_id, name, college, email, role, contact FROM users ORDER BY name ASC")
         all_users = cur.fetchall()
 
-        # Fetch all mentors
         cur.execute("SELECT user_id, name, college, email, expertise FROM mentors ORDER BY name ASC")
         all_mentors = cur.fetchall()
 
@@ -349,13 +303,12 @@ def view_all_users():
         if cur: cur.close()
         if conn: conn.close()
 
-    # You'll need to create a new HTML template named 'view_all_users.html'
     return render_template('view_all_users.html', users=all_users, mentors=all_mentors)
 
 
-@app.route('/delete_event/<int:event_id>', methods=['GET', 'POST']) # Often POST is safer for deletes, but GET for simple links is common
+@app.route('/delete_event/<int:event_id>', methods=['GET', 'POST'])
 def delete_event(event_id):
-    """Handles the deletion of an event and its associated data (stages, registrations, submissions, results)."""
+    """Handles the deletion of an event and its associated data."""
     if 'role' not in session or session['role'] != 'admin':
         flash("Unauthorized access", "danger")
         return redirect(url_for('login'))
@@ -365,15 +318,34 @@ def delete_event(event_id):
         flash("Database connection failed. Cannot delete event.", "danger")
         return redirect(url_for('admin_dashboard'))
 
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=DictCursor) # Use DictCursor to get event title/url
 
     try:
-        # Delete event results
-        cur.execute("DELETE FROM event_results WHERE event_title IN (SELECT title FROM events WHERE id = %s)", (event_id,))
+        # Get event title and image_url to potentially delete from Cloudinary if desired
+        cur.execute("SELECT title, image_url FROM events WHERE id = %s", (event_id,))
+        event_info = cur.fetchone()
         
-        # event_stages, event_registrations, and submissions have ON DELETE CASCADE,
-        # so deleting the event should automatically delete its related entries.
-        # Just deleting the event itself should cascade.
+        # Optional: Delete image from Cloudinary
+        # If you want to delete the actual image file from Cloudinary when event is deleted:
+        # if event_info and event_info['image_url']:
+        #     try:
+        #         # Extract public ID from Cloudinary URL (e.g., 'event_images/my_image_public_id')
+        #         public_id = '/'.join(event_info['image_url'].split('/')[-2:]).split('.')[0]
+        #         cloudinary.uploader.destroy(public_id)
+        #         print(f"Deleted Cloudinary image: {public_id}")
+        #     except Exception as e:
+        #         print(f"Error deleting Cloudinary image {event_info['image_url']}: {e}")
+
+        # Delete associated brainstorm room files for this event if they exist (by event title)
+        # Assuming brainstorm room files are linked to events through some logic
+        # (Your current schema doesn't directly link brainstorm_room_files to events,
+        # so this is conceptual. If brainstorm_rooms are tied to events, you'd delete them too.)
+
+        # Delete event results (linked by event_title, not event_id)
+        if event_info: # Only delete if event_info was found
+            cur.execute("DELETE FROM event_results WHERE event_title = %s", (event_info['title'],))
+        
+        # Delete the event itself (cascades to stages, registrations, submissions)
         cur.execute("DELETE FROM events WHERE id = %s", (event_id,))
         
         conn.commit()
@@ -401,7 +373,6 @@ def register_student():
         email = request.form['email']
         otp_input = request.form.get('otp')
 
-        # Store data in session temporarily
         session['name'] = name
         session['college'] = college
         session['roll_no'] = roll_no
@@ -418,9 +389,9 @@ def register_student():
             else:
                 otp = str(random.randint(100000, 999999))
                 session['otp'] = otp
-                send_otp(email, otp) # Call the send_otp function (flash message handled inside)
+                send_otp(email, otp)
                 return render_template('register_step1.html', show_otp=True)
-        else: # Marwadi college, no OTP needed
+        else:
             return redirect(url_for('register_details'))
 
     return render_template('register_step1.html', show_otp=False)
@@ -451,7 +422,6 @@ def register_details():
 
         cur = conn.cursor()
         try:
-            # Insert into users - use %s
             cur.execute('''INSERT INTO users 
                 (user_id, name, college, roll_no, email, address, contact, role, year, branch, department, password)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
@@ -463,7 +433,7 @@ def register_details():
                     session['email'],
                     address,
                     contact,
-                    'student', # role is hardcoded as 'student'
+                    'student',
                     year,
                     branch,
                     department,
@@ -472,7 +442,6 @@ def register_details():
             )
             conn.commit()
 
-            # Set session variables for auto-login
             session['user'] = session['name']
             session['user_id'] = user_id
             session['role'] = 'student'
@@ -514,7 +483,6 @@ def register_mentor():
 
         cur = conn.cursor()
         try:
-            # Insert into mentors - use %s
             cur.execute('''INSERT INTO mentors 
                 (user_id, name, college, email, expertise, skills, password)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)''',
@@ -522,7 +490,6 @@ def register_mentor():
             )
             conn.commit()
 
-            # Set session variables for auto-login
             session['user'] = name
             session['user_id'] = user_id
             session['role'] = 'mentor'
@@ -564,7 +531,6 @@ def mentor_dashboard():
     if conn is None:
         return render_template('mentor_dashboard.html', events=[], brainstorm_rooms=[], results={})
 
-    # Use DictCursor for fetching data here
     cur = conn.cursor(cursor_factory=DictCursor) 
 
     events_for_template = []
@@ -572,26 +538,25 @@ def mentor_dashboard():
     processed_results = defaultdict(list)
 
     try:
-        # Get all events with full description and image path
-        cur.execute("SELECT id, title, description, date, short_description, image_path FROM events ORDER BY date DESC")
+        # Get all events with full description and image URL
+        cur.execute("SELECT id, title, description, date, short_description, image_url FROM events ORDER BY date DESC")
         events_raw = cur.fetchall()
 
         for event_row in events_raw:
-            event_id = event_row['id'] # Access by key
+            event_id = event_row['id']
             event_data = {
                 'id': event_id,
                 'title': event_row['title'],
-                'description': event_row['description'], # Full description
+                'description': event_row['description'],
                 'date': event_row['date'],
                 'short_description': event_row['short_description'],
-                'image_path': event_row['image_path'],
-                'stages': [] # To store stage details
+                'image_url': event_row['image_url'], # Fetch image_url
+                'stages': []
             }
 
-            # Fetch stages for each event - use %s
             cur.execute("SELECT id, stage_title, deadline FROM event_stages WHERE event_id = %s ORDER BY deadline ASC", (event_id,))
             stages_for_event = cur.fetchall()
-            for stage_row in stages_for_event: # Use stage_row for DictCursor
+            for stage_row in stages_for_event:
                 event_data['stages'].append({
                     'id': stage_row['id'],
                     'stage_title': stage_row['stage_title'],
@@ -599,10 +564,9 @@ def mentor_dashboard():
                 })
             events_for_template.append(event_data)
 
-
         # Get all brainstorm rooms
         cur.execute("SELECT room_id, title, created_by FROM brainstorm_rooms ORDER BY created_at DESC")
-        rooms = cur.fetchall() # These are DictRows already
+        rooms = cur.fetchall()
 
         # Get result announcements
         cur.execute('''
@@ -616,14 +580,13 @@ def mentor_dashboard():
                          ELSE 4
                      END
         ''')
-        raw_results = cur.fetchall() # These are DictRows already
+        raw_results = cur.fetchall()
 
-        # Process raw_results into a dictionary format suitable for the template
-        for result_row in raw_results: # Loop through DictRows
-            event_title = result_row['event_title'] # Access by key
+        for result_row in raw_results:
+            event_title = result_row['event_title']
             position = result_row['position']
             winner_name = result_row['winner_name']
-            processed_results[event_title].append([winner_name, position, ""]) # Added empty string for winner[2]
+            processed_results[event_title].append([winner_name, position, ""])
 
     except psycopg2.Error as e:
         flash(f"Database error on mentor dashboard: {e}", "danger")
@@ -633,7 +596,7 @@ def mentor_dashboard():
         if conn: conn.close()
 
     return render_template('mentor_dashboard.html',
-                           events=events_for_template, # Pass the enriched events data
+                           events=events_for_template,
                            brainstorm_rooms=rooms,
                            results=dict(processed_results),
                            role=session.get('role'))
@@ -654,14 +617,12 @@ def announce_winner():
     cur = conn.cursor()
 
     try:
-        # Loop for 3 positions
         for i in range(1, 4):
             position = request.form.get(f'position{i}')
             name = request.form.get(f'name{i}')
             email = request.form.get(f'email{i}')
 
-            if name and email:  # only add if filled
-                # Insert into event_results - use %s
+            if name and email:
                 cur.execute('''
                     INSERT INTO event_results (event_title, position, winner_name, winner_email)
                     VALUES (%s, %s, %s, %s)
@@ -690,23 +651,20 @@ def event_detail(event_id):
     if conn is None:
         return render_template('event_detail.html', event=None, registered=False)
 
-    # Use DictCursor for fetching event data
     cur = conn.cursor(cursor_factory=DictCursor)
     event = None
     already_registered = False
 
     try:
-        # Fetch event info - use %s
-        cur.execute("SELECT id, title, description, date, short_description, image_path FROM events WHERE id = %s", (event_id,))
-        event = cur.fetchone() # This will be a DictRow
+        # Fetch event info - select image_url
+        cur.execute("SELECT id, title, description, date, short_description, image_url FROM events WHERE id = %s", (event_id,))
+        event = cur.fetchone()
 
-        # Check if student already registered - use %s
         cur.execute("SELECT id FROM event_registrations WHERE user_id = %s AND event_id = %s", 
                     (session['user_id'], event_id))
-        already_registered = cur.fetchone() # Will be None if not registered, or a row if registered
+        already_registered = cur.fetchone()
 
         if request.method == 'POST' and not already_registered:
-            # Insert into event_registrations - use %s
             cur.execute("INSERT INTO event_registrations (user_id, event_id) VALUES (%s, %s)",
                         (session['user_id'], event_id))
             conn.commit()
@@ -735,14 +693,13 @@ def student_registered_events():
     if conn is None:
         return render_template('registered_events.html', events=[])
 
-    # Use DictCursor for consistent data access
     cur = conn.cursor(cursor_factory=DictCursor)
     events_with_stages_and_submissions = []
 
     try:
-        # Get all events the student is registered for - use %s
+        # Get all events the student is registered for - select image_url
         cur.execute('''
-            SELECT e.id, e.title, e.description, e.date, e.short_description, e.image_path
+            SELECT e.id, e.title, e.description, e.date, e.short_description, e.image_url
             FROM event_registrations r
             JOIN events e ON r.event_id = e.id
             WHERE r.user_id = %s
@@ -752,37 +709,36 @@ def student_registered_events():
         registered_events_raw = cur.fetchall()
 
         for event_row in registered_events_raw:
-            event_id = event_row['id'] # Access by key
+            event_id = event_row['id']
             event_data = {
                 'id': event_row['id'],
                 'title': event_row['title'],
                 'description': event_row['description'],
                 'date': event_row['date'],
                 'short_description': event_row['short_description'],
-                'image_path': event_row['image_path'],
-                'stages': [] # This will hold stage details including submission info
+                'image_url': event_row['image_url'], # Fetch image_url
+                'stages': []
             }
 
-            # Get all stages for the current event - use %s
             cur.execute("SELECT id, stage_title, deadline FROM event_stages WHERE event_id = %s ORDER BY deadline ASC", (event_id,))
-            stages_for_event = cur.fetchall() # These are DictRows
+            stages_for_event = cur.fetchall()
 
-            for stage_row in stages_for_event: # Loop through DictRows
-                stage_id = stage_row['id'] # Access by key
-                # Check for submission for this specific stage by the current user - use %s
+            for stage_row in stages_for_event:
+                stage_id = stage_row['id']
+                # Select submission_file_url
                 cur.execute('''
-                    SELECT submission_text, submission_file, submitted_on
+                    SELECT submission_text, submission_file_url, submitted_on
                     FROM submissions
                     WHERE user_id = %s AND event_id = %s AND stage_id = %s
                 ''', (session['user_id'], event_id, stage_id))
-                submission_info = cur.fetchone() # This will be a DictRow or None
+                submission_info = cur.fetchone()
 
                 stage_details = {
                     'id': stage_id,
                     'stage_title': stage_row['stage_title'],
                     'deadline': stage_row['deadline'],
                     'submission_text': submission_info['submission_text'] if submission_info else None,
-                    'submission_file': submission_info['submission_file'] if submission_info else None,
+                    'submission_file_url': submission_info['submission_file_url'] if submission_info else None, # Fetch submission_file_url
                     'submitted_on': submission_info['submitted_on'] if submission_info else None,
                     'status': 'Submitted' if submission_info else 'Not Submitted'
                 }
@@ -812,71 +768,71 @@ def admin_dashboard():
     if conn is None:
         return render_template('admin_dashboard.html', event_stats=[])
 
-    # Use DictCursor for fetching event data
     cur = conn.cursor(cursor_factory=DictCursor)
 
     try:
         if request.method == 'POST':
-            # Event Data
             title = request.form['title']
             description = request.form['description']
             date = request.form['date']
             short_desc = request.form['short_description']
             image_file = request.files.get('event_image')
             
-            relative_path = None
+            image_url = None
+            if image_file and image_file.filename and allowed_file(image_file.filename, ALLOWED_IMAGE_EXTENSIONS):
+                try:
+                    upload_result = cloudinary.uploader.upload(image_file, folder="event_images") 
+                    image_url = upload_result['secure_url']
+                except Exception as e:
+                    flash(f"Event image upload failed: {e}", "danger")
+                    print(f"CLOUDINARY EVENT IMAGE UPLOAD ERROR: {e}")
+            elif image_file and image_file.filename and not allowed_file(image_file.filename, ALLOWED_IMAGE_EXTENSIONS):
+                flash("Invalid image file type. Only PNG, JPG, JPEG, GIF, WEBP allowed.", "danger")
+                # To prevent rendering issues, you might want to break here or fetch existing events
+                # and render the template again without creating the event.
+                # For now, it will proceed but image_url will be None.
 
-            if image_file and image_file.filename and allowed_image(image_file.filename):
-                filename = secure_filename(image_file.filename)
-                image_path = os.path.join(app.config['UPLOAD_IMAGE_FOLDER'], filename)
-                image_file.save(image_path)
-                relative_path = os.path.join('uploads', filename) # For rendering in HTML (static/uploads/)
-            
-            # Insert new event - use %s and RETURNING id
-            cur.execute('''INSERT INTO events (title, short_description, description, date, image_path)
+            # Insert new event - use image_url
+            cur.execute('''INSERT INTO events (title, short_description, description, date, image_url)
                             VALUES (%s, %s, %s, %s, %s) RETURNING id''', 
-                        (title, short_desc, description, date, relative_path))
-            event_id = cur.fetchone()['id'] # Get the returned ID by key
+                        (title, short_desc, description, date, image_url))
+            event_id = cur.fetchone()['id']
 
-            # Stage Data
             stages = request.form.getlist('stage_title[]')
             deadlines = request.form.getlist('deadline[]')
 
             for stage_title, deadline in zip(stages, deadlines):
-                # Insert event stages - use %s
                 cur.execute('INSERT INTO event_stages (event_id, stage_title, deadline) VALUES (%s, %s, %s)',
                             (event_id, stage_title, deadline))
 
             conn.commit()
             flash("Hackathon with stages created successfully!", "success")
 
-        # Get all events for display
-        cur.execute("SELECT id, title, description, date, short_description, image_path FROM events ORDER BY date DESC")
-        events = cur.fetchall() # These are DictRows
+        # Get all events for display - select image_url
+        cur.execute("SELECT id, title, description, date, short_description, image_url FROM events ORDER BY date DESC")
+        events = cur.fetchall()
 
         event_stats = []
-        for event_row in events: # Loop through DictRows
-            event_id = event_row['id'] # Access by key
+        for event_row in events:
+            event_id = event_row['id']
 
-            # Count registered students - use %s
             cur.execute("SELECT COUNT(*) FROM event_registrations WHERE event_id = %s", (event_id,))
             registered = cur.fetchone()[0]
 
-            # Count submissions - use %s
             cur.execute("SELECT COUNT(*) FROM submissions WHERE event_id = %s", (event_id,))
             submitted = cur.fetchone()[0]
 
             event_stats.append({
-                'event': event_row, # Pass the DictRow directly
+                'event': event_row,
                 'registered': registered,
                 'submitted': submitted
-        })
+            })
 
     except psycopg2.Error as e:
-        conn.rollback() # Ensure rollback on error
+        conn.rollback()
         flash(f"Database error on admin dashboard: {e}", "danger")
         print(f"ADMIN DASHBOARD ERROR: {e}")
-        event_stats = [] # Ensure event_stats is defined even on error
+        event_stats = []
     finally:
         if cur: cur.close()
         if conn: conn.close()
@@ -895,34 +851,31 @@ def view_progress(event_id):
     if conn is None:
         return redirect(url_for('admin_dashboard'))
 
-    # Use DictCursor for consistent data access
     cur = conn.cursor(cursor_factory=DictCursor)
     progress = []
     stages = []
 
     try:
-        # Get all stages (id and title) for this event - use %s
         cur.execute("SELECT id, stage_title FROM event_stages WHERE event_id = %s", (event_id,))
-        stage_data = cur.fetchall() # These are DictRows
+        stage_data = cur.fetchall()
 
         if not stage_data:
             flash("No stages found for this event.", "warning")
             return redirect(url_for('admin_dashboard'))
 
-        stages = [row['stage_title'] for row in stage_data]  # list of stage titles
-        stage_id_map = {row['stage_title']: row['id'] for row in stage_data}  # title -> id
+        stages = [row['stage_title'] for row in stage_data]
+        stage_id_map = {row['stage_title']: row['id'] for row in stage_data}
 
-        # Get all registered users for this event - use %s
         cur.execute('''
             SELECT u.user_id, u.name, u.email, u.college, u.roll_no
             FROM event_registrations r
             JOIN users u ON r.user_id = u.user_id
             WHERE r.event_id = %s
         ''', (event_id,))
-        participants = cur.fetchall() # These are DictRows
+        participants = cur.fetchall()
 
-        for user_row in participants: # Loop through DictRows
-            user_id = user_row['user_id'] # Access by key
+        for user_row in participants:
+            user_id = user_row['user_id']
             user_info = {
                 'user_id': user_id,
                 'name': user_row['name'],
@@ -935,18 +888,18 @@ def view_progress(event_id):
             for stage_title in stages:
                 stage_id = stage_id_map[stage_title]
 
-                # Select submission file - use %s
+                # Select submission_file_url
                 cur.execute('''
-                    SELECT submission_file FROM submissions 
+                    SELECT submission_file_url FROM submissions 
                     WHERE event_id = %s AND user_id = %s AND stage_id = %s
                 ''', (event_id, user_id, stage_id))
-                result = cur.fetchone() # This will be a DictRow or None
+                result = cur.fetchone()
 
-                if result and result['submission_file']: # Access by key
-                    file_path = result['submission_file']  # relative path
+                if result and result['submission_file_url']:
+                    file_url = result['submission_file_url']
                     user_info['stage_status'][stage_title] = {
                         'status': '✔️', 
-                        'file': file_path
+                        'file': file_url # This is now a URL
                     }
                 else:
                     user_info['stage_status'][stage_title] = {
@@ -965,34 +918,10 @@ def view_progress(event_id):
     return render_template('view_progress.html', progress=progress, stages=stages, event_id=event_id)
 
 
-# --- GENERAL DOWNLOAD ROUTE (needs definition of UPLOAD_FOLDER or re-purpose) ---
-@app.route('/download/<path:filename>')
-def download_file(filename):
-    """Handles general file downloads (appears unused based on provided code).
-    Requires app.config['UPLOAD_FOLDER'] to be set."""
-    if 'user_id' not in session:
-        flash("Login required", "danger")
-        return redirect(url_for('login'))
-
-    if 'UPLOAD_FOLDER' not in app.config:
-        flash("Download folder 'UPLOAD_FOLDER' not configured in app.config.", "danger")
-        abort(500) # Internal Server Error if configuration is missing
-
-    safe_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    
-    if not os.path.isfile(safe_path):
-        abort(404)
-
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
-
-
-
-
 @app.route('/brainstorm', methods=['GET', 'POST'])
 def brainstorm():
     """Handles creation and listing of brainstorm rooms."""
-    # Allow both 'student' and 'mentor' roles to access this page
-    if 'user_id' not in session or session['role'] not in ['student', 'mentor']: # <--- MODIFIED THIS LINE
+    if 'user_id' not in session or session['role'] not in ['student', 'mentor']:
         flash("Unauthorized access", "danger")
         return redirect(url_for('login'))
 
@@ -1007,7 +936,7 @@ def brainstorm():
     try:
         if request.method == 'POST':
             room_title = request.form['room_title']
-            room_id = str(uuid.uuid4())[:8]  # short unique ID (8 chars)
+            room_id = str(uuid.uuid4())[:8]
             created_by = session['user_id']
             created_at = datetime.now()
 
@@ -1033,7 +962,6 @@ def brainstorm():
     return render_template('brainstorm.html', rooms=rooms_data)
 
 
-
 @app.route('/brainstorm/room/<room_id>')
 def join_brainstorm_room(room_id):
     """Renders the brainstorm room, displaying chat history and shared files."""
@@ -1047,33 +975,34 @@ def join_brainstorm_room(room_id):
     if conn is None:
         return render_template('brainstorm_room.html', room_id=room_id, user=user, shared_files=[], chat_history=[], admin_name="Database Error")
 
-    # Use DictCursor for fetching chat history and user details
     cur = conn.cursor(cursor_factory=DictCursor)
     chat_history = []
+    shared_files_data = [] # New list for persistent shared files
     creator_id = None
     admin_name = "Unknown"
 
     try:
-        # Get chat messages - use %s
         cur.execute("SELECT username, message, timestamp FROM brainstorm_chats WHERE room_id = %s ORDER BY timestamp ASC", (room_id,))
-        chat_history = cur.fetchall() # This will now be a list of DictRows, accessible by key
+        chat_history = cur.fetchall()
 
-        # Get created_by user_id from brainstorm_rooms - use %s
+        # Fetch shared files for this room from the database
+        cur.execute("SELECT filename, file_url, uploaded_by_user, uploaded_at FROM brainstorm_room_files WHERE room_id = %s ORDER BY uploaded_at ASC", (room_id,))
+        shared_files_data = cur.fetchall()
+
         cur.execute("SELECT created_by FROM brainstorm_rooms WHERE room_id = %s", (room_id,))
-        creator_result = cur.fetchone() # This will be a DictRow or None
-        creator_id = creator_result['created_by'] if creator_result else None # Access by key
+        creator_result = cur.fetchone()
+        creator_id = creator_result['created_by'] if creator_result else None
 
-        # Convert creator user_id to username - use %s
         if creator_id:
             cur.execute("SELECT name FROM users WHERE user_id = %s", (creator_id,))
-            admin_result = cur.fetchone() # This will be a DictRow or None
+            admin_result = cur.fetchone()
             if admin_result:
-                admin_name = admin_result['name'] # Access by key
-            else: # If not in users, check mentors table - use %s
+                admin_name = admin_result['name']
+            else:
                 cur.execute("SELECT name FROM mentors WHERE user_id = %s", (creator_id,))
-                mentor_admin_result = cur.fetchone() # This will be a DictRow or None
+                mentor_admin_result = cur.fetchone()
                 if mentor_admin_result:
-                    admin_name = mentor_admin_result['name'] # Access by key
+                    admin_name = mentor_admin_result['name']
 
     except psycopg2.Error as e:
         flash(f"Database error in brainstorm room: {e}", "danger")
@@ -1082,17 +1011,14 @@ def join_brainstorm_room(room_id):
         if cur: cur.close()
         if conn: conn.close()
 
-    # shared_files is still in-memory and will reset on server restart.
-    # For persistence, these files' metadata (filename, url, user, timestamp) should be stored in DB.
-    # The `user` and `timestamp` keys are now added in `upload_file_brainstorm`.
-    files = shared_files.get(room_id, []) 
-
     return render_template('brainstorm_room.html',
                            room_id=room_id,
                            user=user,
-                           shared_files=files, # This will be an empty list on fresh load
-                           chat_history=chat_history, # This will populate from DB
-                           admin_name=admin_name)
+                           shared_files=shared_files_data, # Pass persistent shared files
+                           chat_history=chat_history,
+                           admin_name=admin_name,
+                           role=session.get('role')) # Pass role for dynamic button logic in template
+
 
 @app.route('/student_dashboard')
 def student_dashboard():
@@ -1105,21 +1031,19 @@ def student_dashboard():
     if conn is None:
         return render_template('student_dashboard.html', student=None, events=[], results={})
 
-    cur = conn.cursor(cursor_factory=DictCursor) # Use DictCursor for student and results
+    cur = conn.cursor(cursor_factory=DictCursor)
     student = None
     events = []
     grouped_results = {}
 
     try:
-        # Get student info - use %s
         cur.execute("SELECT user_id, name, college, roll_no, email, address, contact, role, year, branch, department FROM users WHERE user_id = %s", (session['user_id'],))
-        student = cur.fetchone() # This will be a DictRow
+        student = cur.fetchone()
 
-        # Get all events
-        cur.execute("SELECT id, title, description, date, short_description, image_path FROM events ORDER BY date DESC")
-        events = cur.fetchall() # These are DictRows
+        # Get all events - select image_url
+        cur.execute("SELECT id, title, description, date, short_description, image_url FROM events ORDER BY date DESC")
+        events = cur.fetchall()
 
-        # Get winner results grouped by event
         cur.execute('''
             SELECT event_title, position, winner_name, winner_email
             FROM event_results
@@ -1131,11 +1055,10 @@ def student_dashboard():
                          ELSE 4
                      END
         ''')
-        raw_results = cur.fetchall() # These are DictRows
+        raw_results = cur.fetchall()
 
-        # Group winners by event
-        for result_row in raw_results: # Loop through DictRows
-            event_title = result_row['event_title'] # Access by key
+        for result_row in raw_results:
+            event_title = result_row['event_title']
             position = result_row['position']
             name = result_row['winner_name']
             email = result_row['winner_email']
@@ -1155,57 +1078,107 @@ def student_dashboard():
 
 @app.route('/brainstorm/upload/<room>', methods=['POST'])
 def upload_file_brainstorm(room):
-    """Handles file uploads to brainstorm rooms. Stores metadata in-memory."""
+    """Handles file uploads to brainstorm rooms. Persists metadata to PostgreSQL and file to Cloudinary."""
     file = request.files['file']
-    # Get the user who shared the file from the form data (sent by JS)
-    user_who_uploaded = request.form.get('user') # This `user` is the username
+    user_who_uploaded = request.form.get('user')
     
-    if file and user_who_uploaded:
-        filename = secure_filename(file.filename)
-        save_path = os.path.join(BRAINSTORM_FOLDER, filename)
+    if not file or not user_who_uploaded:
+        return jsonify(status='error', message="No file or user provided for upload.")
+
+    if not allowed_file(file.filename, ALLOWED_SUBMISSION_EXTENSIONS): # Using submission extensions for brainstorm files
+        return jsonify(status='error', message="Invalid file type. Only PDF, PPT, PPTX, DOC, DOCX allowed for brainstorm files.")
+
+    try:
+        # Upload to Cloudinary. resource_type='raw' for non-image files.
+        upload_result = cloudinary.uploader.upload(file, resource_type="raw", folder=f"brainstorm_rooms/{room}") 
+        file_url = upload_result['secure_url']
+        filename = file.filename # Use original filename for display
+
+        conn = get_db_connection()
+        if conn is None:
+            return jsonify(status='error', message="Database connection failed for file persistence.")
+        cur = conn.cursor()
         try:
-            file.save(save_path)
+            # Save file metadata to the new brainstorm_room_files table
+            cur.execute('''
+                INSERT INTO brainstorm_room_files (room_id, filename, file_url, uploaded_by_user, uploaded_at)
+                VALUES (%s, %s, %s, %s, %s)
+            ''', (room, filename, file_url, user_who_uploaded, datetime.now()))
+            conn.commit()
+        except psycopg2.Error as e:
+            conn.rollback()
+            print(f"DATABASE ERROR SAVING BRAINSTORM FILE METADATA: {e}")
+            return jsonify(status='error', message=f"Failed to save file metadata to DB: {e}")
+        finally:
+            if cur: cur.close()
+            if conn: conn.close()
 
-            # Use the RENAMED route for brainstorm file downloads
-            file_url = url_for('download_brainstorm_file', filename=filename) 
+        # Return success with necessary data for client-side update
+        return jsonify(status='success', filename=filename, file_url=file_url, user=user_who_uploaded, timestamp=datetime.now().isoformat())
+    except Exception as e:
+        print(f"Cloudinary file upload error: {e}")
+        return jsonify(status='error', message=f"Failed to upload file to Cloudinary: {e}")
 
-            # Save to shared_files (in-memory for now - ADD USER AND TIMESTAMP)
-            if room not in shared_files:
-                shared_files[room] = []
-            
-            # Store full metadata needed for client-side display
-            shared_files[room].append({
-                'filename': filename,
-                'url': file_url,
-                'user': user_who_uploaded, # Store the username
-                'timestamp': datetime.now().isoformat() # Store ISO formatted timestamp
-            })
-
-            return jsonify(status='success', filename=filename, file_url=file_url, user=user_who_uploaded, timestamp=datetime.now().isoformat())
-        except Exception as e:
-            print(f"File upload error: {e}")
-            return jsonify(status='error', message=f"Failed to save file: {e}")
-    return jsonify(status='error', message="No file or user provided for upload.")
 
 @app.route('/brainstorm/files/<room>')
 def get_shared_files(room):
-    """Returns a JSON list of files shared in a brainstorm room (from in-memory store).
-    Includes user and timestamp for each file."""
-    # This currently serves the in-memory shared_files dictionary
-    files = shared_files.get(room, [])
-    return jsonify(files)
+    """Returns a JSON list of files shared in a brainstorm room (from DB)."""
+    conn = get_db_connection()
+    if conn is None:
+        return jsonify(status='error', message="Database connection failed to fetch files.")
+    cur = conn.cursor(cursor_factory=DictCursor)
+    files_data = []
+    try:
+        # Fetch file metadata from the new brainstorm_room_files table
+        cur.execute("SELECT filename, file_url, uploaded_by_user, uploaded_at FROM brainstorm_room_files WHERE room_id = %s ORDER BY uploaded_at ASC", (room,))
+        files_data = cur.fetchall()
+        # Convert DictRows to plain dictionaries for jsonify if necessary (DictCursor often handles this)
+        files_data = [dict(row) for row in files_data]
+    except psycopg2.Error as e:
+        print(f"DATABASE ERROR FETCHING BRAINSTORM FILES: {e}")
+        return jsonify(status='error', message=f"Failed to fetch files from DB: {e}")
+    finally:
+        if cur: cur.close()
+        if conn: conn.close()
+    
+    return jsonify(files_data)
+
 
 @app.route('/brainstorm/create', methods=['POST'])
 def create_room():
-    """Handles creating a new brainstorm room.
-    Note: This route seems to duplicate logic with /brainstorm's POST handling.
-    Consider consolidating."""
-    room_id = str(uuid.uuid4())[:8] # Consistent 8-char ID
-    admin_name = session.get('user', 'Guest')
-    # rooms is an in-memory dictionary, for real rooms, this should be consistent with DB.
-    rooms[room_id] = {'admin': admin_name, 'chat': [], 'files': []} 
-    flash(f"Room created! Share the invite link: /brainstorm/room/{room_id}", "success")
-    return redirect(url_for('join_brainstorm_room', room_id=room_id))
+    """Handles creating a new brainstorm room."""
+    # This route is a bit redundant with the POST logic in /brainstorm, consider consolidating.
+    if 'user_id' not in session or session['role'] != 'student': # Only students create rooms
+        flash("Unauthorized access to create room", "danger")
+        return redirect(url_for('dashboard')) # Redirect to appropriate dashboard
+
+    room_id = str(uuid.uuid4())[:8]
+    created_by = session['user_id']
+    created_at = datetime.now()
+
+    conn = get_db_connection()
+    if conn is None:
+        flash("Database connection failed. Room creation failed.", "danger")
+        return redirect(url_for('brainstorm'))
+
+    cur = conn.cursor()
+    try:
+        cur.execute('''
+            INSERT INTO brainstorm_rooms (room_id, title, created_by, created_at)
+            VALUES (%s, %s, %s, %s)
+        ''', (room_id, "New Brainstorm Room", created_by, created_at)) # Default title, user can rename
+        conn.commit()
+        flash(f"Room created! Share the invite link: /brainstorm/room/{room_id}", "success")
+        return redirect(url_for('join_brainstorm_room', room_id=room_id))
+    except psycopg2.Error as e:
+        conn.rollback()
+        flash(f"Database error creating room: {e}", "danger")
+        print(f"BRAINSTORM ROOM CREATE ERROR: {e}")
+    finally:
+        if cur: cur.close()
+        if conn: conn.close()
+    return redirect(url_for('brainstorm')) # Fallback redirect
+
 
 @socketio.on('join')
 def handle_join(data):
@@ -1214,7 +1187,6 @@ def handle_join(data):
     user = data.get('user', 'Anonymous')
     if room and user:
         join_room(room)
-        # Emit to the room that a user joined, include current timestamp
         emit('message', {'user': 'System', 'msg': f"{user} joined the room.", 'timestamp': datetime.now().isoformat()}, to=room)
     else:
         print("Invalid data for join event:", data)
@@ -1226,26 +1198,22 @@ def handle_message(data):
     room = data.get('room')
     user = data.get('user')
     msg = data.get('msg')
-    timestamp = data.get('timestamp') # Client is now sending timestamp
+    timestamp = data.get('timestamp')
 
     if not all([room, user, msg]):
         print("Invalid message data:", data)
         return
 
-    # Save to DB
     conn = get_db_connection()
     if conn is None:
-        return # Cannot save message if DB connection fails
+        return
     
     cur = conn.cursor()
     try:
-        # Insert into brainstorm_chats - use %s
-        # Convert ISO timestamp string back to datetime object for DB storage
         db_timestamp = datetime.fromisoformat(timestamp) if timestamp else datetime.now()
         cur.execute("INSERT INTO brainstorm_chats (room_id, username, message, timestamp) VALUES (%s, %s, %s, %s)", 
                     (room, user, msg, db_timestamp))
         conn.commit()
-        # Emit with user, message, AND timestamp for other clients
         emit('message', {'user': user, 'msg': msg, 'timestamp': timestamp}, to=room)
     except psycopg2.Error as e:
         conn.rollback()
@@ -1254,23 +1222,19 @@ def handle_message(data):
         if cur: cur.close()
         if conn: conn.close()
 
-@socketio.on('share_file') # NEW Socket.IO event handler for file sharing
+@socketio.on('share_file')
 def handle_share_file(data):
     """Handles real-time notification of a file being shared in a brainstorm room."""
     room = data.get('room')
     user = data.get('user')
     filename = data.get('filename')
     file_url = data.get('file_url')
-    timestamp = data.get('timestamp') # Client is sending timestamp
+    timestamp = data.get('timestamp')
 
     if not all([room, user, filename, file_url, timestamp]):
         print("Invalid file share data:", data)
         return
     
-    # At this point, the file is already saved to disk and metadata is in `shared_files` (in-memory)
-    # If you wanted to store file metadata persistently in DB, this would be the place to do it.
-    
-    # Emit the file details to all clients in the room
     emit('file_shared', {'user': user, 'filename': filename, 'file_url': file_url, 'timestamp': timestamp}, to=room)
 
 
@@ -1284,11 +1248,10 @@ def profile():
     user_data = get_user_by_id(session['user_id'])
     if not user_data:
         flash("User data not found. Please log in again.", "danger")
-        session.clear() # Clear session if user data is missing
+        session.clear()
         return redirect(url_for('login'))
 
     if request.method == 'POST':
-        # Update profile information
         contact = request.form.get('contact')
         address = request.form.get('address')
         year = request.form.get('year')
@@ -1297,11 +1260,10 @@ def profile():
 
         conn = get_db_connection()
         if conn is None:
-            return render_template('profile.html', user_data=user_data) # Keep current data
+            return render_template('profile.html', user_data=user_data)
 
         cur = conn.cursor()
         try:
-            # Update users table - use %s
             cur.execute('''
                 UPDATE users
                 SET contact = %s, address = %s, year = %s, branch = %s, department = %s
@@ -1309,7 +1271,6 @@ def profile():
             ''', (contact, address, year, branch, department, session['user_id']))
             conn.commit()
             flash("Profile updated successfully!", "success")
-            # Re-fetch user data to update the displayed info immediately
             user_data = get_user_by_id(session['user_id'])
         except psycopg2.Error as e:
             conn.rollback()
@@ -1338,7 +1299,7 @@ def change_password():
         session.clear()
         return redirect(url_for('login'))
 
-    if not check_password_hash(user_data['password'], current_password): # Access by key if DictCursor
+    if not check_password_hash(user_data['password'], current_password):
         flash("Current password incorrect.", "danger")
         return redirect(url_for('profile'))
 
@@ -1346,7 +1307,7 @@ def change_password():
         flash("New passwords do not match.", "danger")
         return redirect(url_for('profile'))
 
-    if len(new_password) < 6: # Basic password length validation
+    if len(new_password) < 6:
         flash("New password must be at least 6 characters long.", "danger")
         return redirect(url_for('profile'))
 
@@ -1358,7 +1319,6 @@ def change_password():
 
     cur = conn.cursor()
     try:
-        # Update users password - use %s
         cur.execute("UPDATE users SET password = %s WHERE user_id = %s", (hashed_new_password, session['user_id']))
         conn.commit()
         flash("Password changed successfully!", "success")
@@ -1382,8 +1342,4 @@ def logout():
 
 # ---------- Run App ----------
 if __name__ == '__main__':
-    # You can define UPLOAD_FOLDER here if the /download/<path:filename> route is intended for general use.
-    # For example:
-    # app.config['UPLOAD_FOLDER'] = 'general_uploads'
-    # if not os.path.exists('general_uploads'): os.makedirs('general_uploads')
     socketio.run(app, debug=True)
