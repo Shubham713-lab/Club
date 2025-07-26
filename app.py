@@ -15,10 +15,13 @@ from flask_socketio import SocketIO, join_room, leave_room, send, emit
 from collections import defaultdict
 
 # --- NEW: PostgreSQL Imports and Configuration ---
+import os
 import psycopg2
-from psycopg2 import sql
-from psycopg2.extras import DictCursor # This will make your fetched rows dictionary-like
+from psycopg2.extras import DictCursor
 
+DATABASE_URL = os.getenv("postgresql://code_forge_db_user:oDWXOdCVw7SMksBC1G1hCXGPUPRziBSl@dpg-d224ffbe5dus7398pffg-a/code_forge_db")
+
+conn = psycopg2.connect(DATABASE_URL, cursor_factory=DictCursor)
 
 # PostgreSQL Database connection details - MAKE SURE TO UPDATE DB_PASSWORD
 DB_NAME = "my_app_db"
