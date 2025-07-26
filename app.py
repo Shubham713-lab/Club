@@ -19,7 +19,7 @@ import os
 import psycopg2
 from psycopg2.extras import DictCursor
 
-DATABASE_URL = os.getenv("postgresql://code_forge_db_user:oDWXOdCVw7SMksBC1G1hCXGPUPRziBSl@dpg-d224ffbe5dus7398pffg-a/code_forge_db")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 conn = psycopg2.connect(DATABASE_URL, cursor_factory=DictCursor)
 
