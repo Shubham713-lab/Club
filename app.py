@@ -183,7 +183,8 @@ def login():
             print(f"LOGIN ERROR: {e}")
             flash("A database error occurred during login.", "danger")
         finally:
-            conn.close()
+            if conn:
+                conn.close()
 
     return render_template('login.html')
 
@@ -275,7 +276,8 @@ def register_details():
             conn.rollback()
             flash("Registration failed due to a database error. It's possible the email or roll number is already in use.", "danger")
         finally:
-            conn.close()
+            if conn:
+                conn.close()
 
     return render_template('register_details.html', needs_otp=needs_otp)
 
@@ -316,7 +318,8 @@ def register_mentor():
             conn.rollback()
             flash("Registration failed due to a database error.", "danger")
         finally:
-            conn.close()
+            if conn:
+                conn.close()
     
     return render_template('register_mentor.html')
 
@@ -373,7 +376,8 @@ def student_dashboard():
             print(f"STUDENT DASHBOARD ERROR: {e}")
             flash("Failed to load dashboard data.", "danger")
         finally:
-            conn.close()
+            if conn:
+                conn.close()
             
     return render_template('student_dashboard.html', student=student_data, events=events, results=results, role='student')
 
@@ -417,7 +421,7 @@ def admin_dashboard():
                 
                 conn.commit()
                 flash("New event created successfully!", "success")
-                return redirect(url_for('admin_dashboard')) # Redirect to prevent form resubmission
+                return redirect(url_for('admin_dashboard'))
 
             # Fetch stats for all existing events
             cur.execute("SELECT * FROM events ORDER BY date DESC")
@@ -428,14 +432,18 @@ def admin_dashboard():
                 cur.execute("SELECT COUNT(DISTINCT user_id) FROM submissions WHERE event_id = %s", (event['id'],))
                 submitted_count = cur.fetchone()['count']
                 event_stats.append({'event': event, 'registered': registered_count, 'submitted': submitted_count})
-    except psycopg2.Error as e:
-        print(f"ADMIN DASHBOARD ERROR: {e}")
-        conn.rollback()
-        flash("A database error occurred.", "danger")
-    finally:
-        conn.close()
         
-    return render_template('admin_dashboard.html', event_stats=event_stats)
+        return render_template('admin_dashboard.html', event_stats=event_stats)
+
+    except Exception as e:
+        print(f"!!! UNHANDLED ERROR IN ADMIN DASHBOARD: {e} !!!")
+        if conn:
+            conn.rollback()
+        flash("An unexpected error occurred while loading the admin dashboard. Please contact support.", "danger")
+        return redirect(url_for('home'))
+    finally:
+        if conn:
+            conn.close()
 
 
 @app.route('/mentor_dashboard')
@@ -471,7 +479,8 @@ def mentor_dashboard():
             print(f"MENTOR DASHBOARD ERROR: {e}")
             flash("Failed to load mentor dashboard data.", "danger")
         finally:
-            conn.close()
+            if conn:
+                conn.close()
 
     return render_template('mentor_dashboard.html', events=events, brainstorm_rooms=rooms, results=results, role='mentor')
 
@@ -483,24 +492,22 @@ def profile():
         flash("Please log in to view your profile.", "info")
         return redirect(url_for('login'))
         
-    # Profile route can be for students or mentors, fetch from correct table
     role = session['role']
-    table = 'users' if role == 'student' else 'mentors'
     
     if request.method == 'POST':
-        # Handle profile updates
         conn = get_db_connection()
         if conn:
             try:
                 with conn.cursor() as cur:
+                    # SECURITY: Use separate, safe queries for each role
                     if role == 'student':
                         cur.execute(
-                            f"UPDATE {table} SET contact = %s, address = %s, year = %s, branch = %s, department = %s WHERE user_id = %s",
+                            "UPDATE users SET contact = %s, address = %s, year = %s, branch = %s, department = %s WHERE user_id = %s",
                             (request.form['contact'], request.form['address'], request.form['year'], request.form['branch'], request.form['department'], session['user_id'])
                         )
                     elif role == 'mentor':
                          cur.execute(
-                            f"UPDATE {table} SET college = %s, expertise = %s, skills = %s WHERE user_id = %s",
+                            "UPDATE mentors SET college = %s, expertise = %s, skills = %s WHERE user_id = %s",
                             (request.form['college'], request.form['expertise'], request.form['skills'], session['user_id'])
                         )
                     conn.commit()
@@ -510,7 +517,8 @@ def profile():
                 conn.rollback()
                 flash("Failed to update profile due to a database error.", "danger")
             finally:
-                conn.close()
+                if conn:
+                    conn.close()
         return redirect(url_for('profile'))
 
     # Fetch current user data for display
@@ -519,12 +527,17 @@ def profile():
     if conn:
         try:
             with conn.cursor() as cur:
-                cur.execute(f"SELECT * FROM {table} WHERE user_id = %s", (session['user_id'],))
+                # SECURITY: Use separate, safe queries for each role
+                if role == 'student':
+                    cur.execute("SELECT * FROM users WHERE user_id = %s", (session['user_id'],))
+                elif role == 'mentor':
+                    cur.execute("SELECT * FROM mentors WHERE user_id = %s", (session['user_id'],))
                 user_data = cur.fetchone()
         except psycopg2.Error as e:
             print(f"PROFILE FETCH ERROR: {e}")
         finally:
-            conn.close()
+            if conn:
+                conn.close()
 
     if not user_data:
         flash("Could not retrieve user profile. Please log in again.", "danger")
@@ -539,9 +552,9 @@ def change_password():
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
-    current_password = request.form['current_password']
-    new_password = request.form['new_password']
-    confirm_new_password = request.form['confirm_new_password']
+    current_password = request.form.get('current_password')
+    new_password = request.form.get('new_password')
+    confirm_new_password = request.form.get('confirm_new_password')
 
     if new_password != confirm_new_password:
         flash("New passwords do not match.", "danger")
@@ -552,23 +565,36 @@ def change_password():
         return redirect(url_for('profile'))
 
     role = session['role']
-    table = 'admin' if role == 'admin' else ('users' if role == 'student' else 'mentors')
-    pk_column = 'username' if role == 'admin' else 'user_id'
-    
     conn = get_db_connection()
     if not conn:
         return redirect(url_for('profile'))
         
     try:
         with conn.cursor() as cur:
-            cur.execute(f"SELECT password FROM {table} WHERE {pk_column} = %s", (session['user_id'],))
+            user = None
+            # SECURITY: Use separate, safe queries for each role
+            if role == 'admin':
+                cur.execute("SELECT password FROM admin WHERE username = %s", (session['user_id'],))
+            elif role == 'student':
+                cur.execute("SELECT password FROM users WHERE user_id = %s", (session['user_id'],))
+            elif role == 'mentor':
+                cur.execute("SELECT password FROM mentors WHERE user_id = %s", (session['user_id'],))
             user = cur.fetchone()
+
             if not user or not check_password_hash(user['password'], current_password):
                 flash("Current password incorrect.", "danger")
                 return redirect(url_for('profile'))
 
             hashed_new_password = generate_password_hash(new_password)
-            cur.execute(f"UPDATE {table} SET password = %s WHERE {pk_column} = %s", (hashed_new_password, session['user_id']))
+            
+            # SECURITY: Use separate, safe update queries
+            if role == 'admin':
+                cur.execute("UPDATE admin SET password = %s WHERE username = %s", (hashed_new_password, session['user_id']))
+            elif role == 'student':
+                cur.execute("UPDATE users SET password = %s WHERE user_id = %s", (hashed_new_password, session['user_id']))
+            elif role == 'mentor':
+                cur.execute("UPDATE mentors SET password = %s WHERE user_id = %s", (hashed_new_password, session['user_id']))
+
             conn.commit()
             flash("Password changed successfully!", "success")
     except psycopg2.Error as e:
@@ -576,7 +602,8 @@ def change_password():
         conn.rollback()
         flash("Failed to change password due to a database error.", "danger")
     finally:
-        conn.close()
+        if conn:
+            conn.close()
         
     return redirect(url_for('profile'))
 
@@ -615,7 +642,8 @@ def event_detail(event_id):
             conn.rollback()
             flash("A database error occurred.", "danger")
         finally:
-            conn.close()
+            if conn:
+                conn.close()
             
     if not event:
         abort(404)
@@ -663,7 +691,8 @@ def student_registered_events():
             print(f"REGISTERED EVENTS ERROR: {e}")
             flash("Failed to load your registered events.", "danger")
         finally:
-            conn.close()
+            if conn:
+                conn.close()
             
     return render_template('registered_events.html', events_data=events_data)
 
@@ -718,7 +747,8 @@ def submit_stage(event_id, stage_id):
         conn.rollback()
         flash("A database error occurred during submission.", "danger")
     finally:
-        conn.close()
+        if conn:
+            conn.close()
 
     return render_template('submit_stage.html', stage=stage, event_id=event_id, stage_id=stage_id)
 
@@ -767,7 +797,8 @@ def view_progress(event_id):
             print(f"VIEW PROGRESS ERROR: {e}")
             flash("Failed to load progress data.", "danger")
         finally:
-            conn.close()
+            if conn:
+                conn.close()
             
     return render_template('view_progress.html', progress=progress_data, stages=[s['stage_title'] for s in stages], event_title=event_title)
 
@@ -796,7 +827,8 @@ def view_all_users():
             print(f"VIEW ALL USERS ERROR: {e}")
             flash("Failed to fetch user list.", "danger")
         finally:
-            conn.close()
+            if conn:
+                conn.close()
 
     return render_template('all_users.html', users=users)
 
@@ -827,7 +859,8 @@ def announce_winner():
             conn.rollback()
             flash("A database error occurred while announcing winners.", "danger")
         finally:
-            conn.close()
+            if conn:
+                conn.close()
     
     return redirect(url_for('admin_dashboard'))
 
@@ -865,7 +898,8 @@ def brainstorm():
         flash("A database error occurred.", "danger")
         rooms_data = []
     finally:
-        conn.close()
+        if conn:
+            conn.close()
 
     return render_template('brainstorm.html', rooms=rooms_data)
 
@@ -900,7 +934,8 @@ def join_brainstorm_room(room_id):
             print(f"BRAINSTORM ROOM ERROR: {e}")
             flash("Failed to load room data.", "danger")
         finally:
-            conn.close()
+            if conn:
+                conn.close()
             
     # Files are fetched via a separate JS call to /brainstorm/files/<room>
     return render_template(
@@ -980,7 +1015,8 @@ def handle_send_message(data):
             print(f"CHAT MESSAGE SAVE ERROR: {e}")
             conn.rollback()
         finally:
-            conn.close()
+            if conn:
+                conn.close()
 
 # --- File Download Routes ---
 
