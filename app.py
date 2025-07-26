@@ -317,6 +317,45 @@ def send_otp(receiver_email, otp):
 
     return False
 
+# app.py
+
+# ... (other imports and functions) ...
+
+@app.route('/view_all_users')
+def view_all_users():
+    """Displays a list of all users (students and mentors) for admin."""
+    if 'role' not in session or session['role'] != 'admin':
+        flash("Unauthorized access", "danger")
+        return redirect(url_for('login'))
+
+    conn = get_db_connection()
+    if conn is None:
+        return render_template('view_all_users.html', users=[], mentors=[]) # Or redirect, depending on desired behavior
+
+    cur = conn.cursor(cursor_factory=DictCursor)
+    all_users = []
+    all_mentors = []
+
+    try:
+        # Fetch all students
+        cur.execute("SELECT user_id, name, college, email, role, contact FROM users ORDER BY name ASC")
+        all_users = cur.fetchall()
+
+        # Fetch all mentors
+        cur.execute("SELECT user_id, name, college, email, expertise FROM mentors ORDER BY name ASC")
+        all_mentors = cur.fetchall()
+
+    except psycopg2.Error as e:
+        flash(f"Database error fetching users: {e}", "danger")
+        print(f"VIEW ALL USERS ERROR: {e}")
+    finally:
+        if cur: cur.close()
+        if conn: conn.close()
+
+    # You'll need to create a new HTML template named 'view_all_users.html'
+    return render_template('view_all_users.html', users=all_users, mentors=all_mentors)
+
+
 
 # ---------- Student Registration Step 1 ----------
 @app.route('/register_student', methods=['GET', 'POST'])

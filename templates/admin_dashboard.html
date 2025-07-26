@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,27 +13,45 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #000000; /* Black background */
+            background-color: #000000;
+            /* Black background */
             margin: 0;
             min-height: 100vh;
-            color: #E5E7EB; /* Light gray for general text */
+            color: #E5E7EB;
+            /* Light gray for general text */
             display: flex;
             flex-direction: column;
         }
 
         /* Custom animations */
         @keyframes pulse-slow {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
         }
+
         .animate-pulse-slow {
             animation: pulse-slow 3s infinite ease-in-out;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
+
         .animate-fade-in {
             animation: fadeIn 0.6s ease-out forwards;
         }
@@ -42,22 +61,26 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(103, 232, 249, 0.4);
         }
+
         .delete-button-hover:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); /* Red shadow for delete */
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+            /* Red shadow for delete */
         }
 
         /* Input focus animation */
         .input-focus-animation:focus {
             outline: none;
-            box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.5); /* #67E8F9 with transparency */
+            box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.5);
+            /* #67E8F9 with transparency */
             border-color: #67E8F9;
         }
 
         /* Custom file upload button style */
         input[type="file"]::file-selector-button {
             background-color: #67E8F9;
-            color: #1F2937; /* Dark text for contrast */
+            color: #1F2937;
+            /* Dark text for contrast */
             padding: 0.75rem 1.5rem;
             border-radius: 0.5rem;
             border: none;
@@ -67,16 +90,20 @@
         }
 
         input[type="file"]::file-selector-button:hover {
-            background-color: #4FD1C5; /* Slightly darker cyan on hover */
+            background-color: #4FD1C5;
+            /* Slightly darker cyan on hover */
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(103, 232, 249, 0.4);
         }
 
         /* Pre-formatted text styling */
         pre {
-            white-space: pre-wrap; /* Ensures text wraps within the container */
-            word-wrap: break-word; /* Breaks long words */
-            font-family: 'Inter', sans-serif; /* Use Inter for pre too */
+            white-space: pre-wrap;
+            /* Ensures text wraps within the container */
+            word-wrap: break-word;
+            /* Breaks long words */
+            font-family: 'Inter', sans-serif;
+            /* Use Inter for pre too */
         }
 
         /* Modal specific styles */
@@ -102,7 +129,8 @@
         }
 
         .modal-content {
-            background-color: #1F2937; /* Dark gray */
+            background-color: #1F2937;
+            /* Dark gray */
             padding: 2rem;
             border-radius: 0.75rem;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
@@ -120,6 +148,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Navigation Bar -->
     <nav class="bg-gray-900 p-4 shadow-lg sticky top-0 z-50">
@@ -127,12 +156,14 @@
             <span id="logo" class="text-[#67E8F9] text-3xl font-extrabold tracking-wide">Code Forge - Admin</span>
             <div class="flex space-x-4">
                 <a href="{{ url_for('view_all_users') }}">
-                    <button class="bg-gray-700 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-600 transition duration-300 ease-in-out button-hover-animation shadow-md hover:shadow-gray-600/40">
+                    <button
+                        class="bg-gray-700 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-600 transition duration-300 ease-in-out button-hover-animation shadow-md hover:shadow-gray-600/40">
                         <i class="fas fa-users mr-2"></i> View All Users
                     </button>
                 </a>
                 <a id="b1" href="{{ url_for('logout') }}">
-                    <button class="bg-[#EF4444] text-white px-6 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out delete-button-hover shadow-md hover:shadow-[#EF4444]/40">
+                    <button
+                        class="bg-[#EF4444] text-white px-6 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out delete-button-hover shadow-md hover:shadow-[#EF4444]/40">
                         <i class="fas fa-sign-out-alt mr-2"></i> Logout
                     </button>
                 </a>
@@ -149,33 +180,35 @@
                 <h2 class="text-5xl font-extrabold text-center mb-10 text-[#67E8F9] leading-tight animate-pulse-slow">
                     Add New Event
                 </h2>
-                
+
                 <form method="POST" enctype="multipart/form-data" class="space-y-6">
                     <div>
                         <label for="title" class="sr-only">Event Title</label>
                         <input type="text" id="title" name="title" placeholder="Event Title" required
-                               class="w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:ring-2 focus:ring-[#67E8F9] focus:border-transparent transition duration-200 input-focus-animation">
+                            class="w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:ring-2 focus:ring-[#67E8F9] focus:border-transparent transition duration-200 input-focus-animation">
                     </div>
                     <div>
                         <label for="short_description" class="sr-only">Short Description</label>
-                        <textarea id="short_description" name="short_description" placeholder="Short Description" required rows="3"
-                                  class="w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:ring-2 focus:ring-[#67E8F9] focus:border-transparent transition duration-200 input-focus-animation"></textarea>
+                        <textarea id="short_description" name="short_description" placeholder="Short Description"
+                            required rows="3"
+                            class="w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:ring-2 focus:ring-[#67E8F9] focus:border-transparent transition duration-200 input-focus-animation"></textarea>
                     </div>
                     <div>
                         <label for="description" class="sr-only">Event Description</label>
-                        <textarea id="description" name="description" placeholder="Full Event Description" required rows="6"
-                                  class="w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:ring-2 focus:ring-[#67E8F9] focus:border-transparent transition duration-200 input-focus-animation"></textarea>
+                        <textarea id="description" name="description" placeholder="Full Event Description" required
+                            rows="6"
+                            class="w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:ring-2 focus:ring-[#67E8F9] focus:border-transparent transition duration-200 input-focus-animation"></textarea>
                     </div>
                     <div>
                         <label for="date" class="block text-gray-300 text-lg font-medium mb-2">Deadline:</label>
                         <input type="date" id="date" name="date" required
-                               class="w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:ring-2 focus:ring-[#67E8F9] focus:border-transparent transition duration-200 input-focus-animation">
+                            class="w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:ring-2 focus:ring-[#67E8F9] focus:border-transparent transition duration-200 input-focus-animation">
                     </div>
 
                     <div class="mt-6">
-                        <label for="event_image" class="block text-gray-300 text-lg font-medium mb-4">Event Image:</label>
-                        <input type="file" id="event_image" name="event_image" accept="image/*"
-                               class="block w-full text-sm text-gray-400
+                        <label for="event_image" class="block text-gray-300 text-lg font-medium mb-4">Event
+                            Image:</label>
+                        <input type="file" id="event_image" name="event_image" accept="image/*" class="block w-full text-sm text-gray-400
                                       file:mr-4 file:py-2 file:px-4
                                       file:rounded-lg file:border-0
                                       file:text-sm file:font-semibold
@@ -188,17 +221,17 @@
                     <div id="stages" class="space-y-4">
                         <div class="stage-group flex flex-col sm:flex-row gap-4">
                             <input type="text" name="stage_title[]" placeholder="Stage Title" required
-                                   class="flex-1 px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:ring-2 focus:ring-[#67E8F9] focus:border-transparent transition duration-200 input-focus-animation">
+                                class="flex-1 px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:ring-2 focus:ring-[#67E8F9] focus:border-transparent transition duration-200 input-focus-animation">
                             <input type="date" name="deadline[]" required
-                                   class="flex-1 px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:ring-2 focus:ring-[#67E8F9] focus:border-transparent transition duration-200 input-focus-animation">
+                                class="flex-1 px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:ring-2 focus:ring-[#67E8F9] focus:border-transparent transition duration-200 input-focus-animation">
                         </div>
                     </div>
                     <button type="button" onclick="addStage()"
-                            class="bg-gray-700 text-white px-6 py-3 rounded-lg font-bold hover:bg-gray-600 transition duration-300 ease-in-out button-hover-animation shadow-md hover:shadow-gray-600/40">
+                        class="bg-gray-700 text-white px-6 py-3 rounded-lg font-bold hover:bg-gray-600 transition duration-300 ease-in-out button-hover-animation shadow-md hover:shadow-gray-600/40">
                         <i class="fas fa-plus mr-2"></i> Add Stage
                     </button>
                     <button type="submit"
-                            class="w-full bg-[#67E8F9] text-gray-900 font-bold py-3 rounded-lg hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:shadow-[#67E8F9]/40">
+                        class="w-full bg-[#67E8F9] text-gray-900 font-bold py-3 rounded-lg hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:shadow-[#67E8F9]/40">
                         Create Event
                     </button>
                 </form>
@@ -208,13 +241,15 @@
             <div class="flex flex-col space-y-8">
                 <!-- Announce Winners Section -->
                 <section class="bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-800">
-                    <h3 class="text-5xl font-extrabold text-center mb-10 text-[#67E8F9] leading-tight animate-pulse-slow">
+                    <h3
+                        class="text-5xl font-extrabold text-center mb-10 text-[#67E8F9] leading-tight animate-pulse-slow">
                         🏆 Announce Winners
                     </h3>
                     <form method="POST" action="{{ url_for('announce_winner') }}" class="space-y-6">
                         <div>
                             <label for="event_title_winner" class="sr-only">Event Title</label>
-                            <input type="text" id="event_title_winner" name="event_title" placeholder="Event Title (e.g., Annual Hackathon 2025)" required
+                            <input type="text" id="event_title_winner" name="event_title"
+                                placeholder="Event Title (e.g., Annual Hackathon 2025)" required
                                 class="w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:ring-2 focus:ring-[#67E8F9] focus:border-transparent transition duration-200 input-focus-animation">
                         </div>
 
@@ -249,7 +284,7 @@
                         </div>
 
                         <button type="submit"
-                                class="w-full bg-[#67E8F9] text-gray-900 font-bold py-3 rounded-lg hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:shadow-[#67E8F9]/40">
+                            class="w-full bg-[#67E8F9] text-gray-900 font-bold py-3 rounded-lg hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:shadow-[#67E8F9]/40">
                             Announce Winners
                         </button>
                     </form>
@@ -268,22 +303,27 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {% for item in event_stats %}
                 <div class="event bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 animate-fade-in">
-                    <h3 class="text-3xl font-bold text-white mb-2">{{ item.event[1] }} <span class="text-gray-400 text-xl">({{ item.event[3] }})</span></h3>
+                    <h3 class="text-3xl font-bold text-white mb-2">{{ item.event[1] }} <span
+                            class="text-gray-400 text-xl">({{ item.event[3] }})</span></h3>
                     <p class="text-gray-300 mt-4">
                         <strong class="text-white">Description:</strong>
-                        <pre class="mt-2 p-3 bg-gray-700 rounded-md border border-gray-600 text-gray-400 text-base overflow-auto">{{ item.event[2] }}</pre>
+                    <pre
+                        class="mt-2 p-3 bg-gray-700 rounded-md border border-gray-600 text-gray-400 text-base overflow-auto">{{ item.event[2] }}</pre>
                     </p>
-                    <p class="text-gray-300 mt-4"><strong class="text-white">Total Registered Students:</strong> <span class="text-[#67E8F9]">{{ item.registered }}</span></p>
-                    <p class="text-gray-300"><strong class="text-white">Total Submissions:</strong> <span class="text-[#67E8F9]">{{ item.submitted }}</span></p>
+                    <p class="text-gray-300 mt-4"><strong class="text-white">Total Registered Students:</strong> <span
+                            class="text-[#67E8F9]">{{ item.registered }}</span></p>
+                    <p class="text-gray-300"><strong class="text-white">Total Submissions:</strong> <span
+                            class="text-[#67E8F9]">{{ item.submitted }}</span></p>
 
                     <div class="mt-6 flex flex-wrap gap-3">
                         <!-- Delete button now calls JavaScript function -->
                         <button onclick="showDeleteConfirm('{{ item.event[0] }}', '{{ item.event[1] }}')"
-                                class="bg-[#EF4444] text-white px-5 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out delete-button-hover shadow-md hover:shadow-[#EF4444]/40">
+                            class="bg-[#EF4444] text-white px-5 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out delete-button-hover shadow-md hover:shadow-[#EF4444]/40">
                             <i class="fas fa-trash-alt mr-2"></i> Delete
                         </button>
                         <a href="{{ url_for('view_progress', event_id=item.event[0]) }}">
-                            <button class="bg-gray-700 text-white px-5 py-2 rounded-lg font-semibold hover:bg-gray-600 transition duration-300 ease-in-out button-hover-animation shadow-md hover:shadow-gray-600/40">
+                            <button
+                                class="bg-gray-700 text-white px-5 py-2 rounded-lg font-semibold hover:bg-gray-600 transition duration-300 ease-in-out button-hover-animation shadow-md hover:shadow-gray-600/40">
                                 <i class="fas fa-chart-line mr-2"></i> View Progress
                             </button>
                         </a>
@@ -299,14 +339,15 @@
     <div id="deleteConfirmModal" class="modal-overlay">
         <div class="modal-content">
             <h4 class="text-2xl font-bold text-white mb-4">Confirm Deletion</h4>
-            <p class="text-gray-300 mb-6">Are you sure you want to delete "<span id="eventNameToDelete" class="font-semibold text-[#67E8F9]"></span>"? This action cannot be undone.</p>
+            <p class="text-gray-300 mb-6">Are you sure you want to delete "<span id="eventNameToDelete"
+                    class="font-semibold text-[#67E8F9]"></span>"? This action cannot be undone.</p>
             <div class="flex justify-center gap-4">
                 <button id="confirmDeleteBtn"
-                        class="bg-[#EF4444] text-white px-6 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out delete-button-hover shadow-md hover:shadow-[#EF4444]/40">
+                    class="bg-[#EF4444] text-white px-6 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out delete-button-hover shadow-md hover:shadow-[#EF4444]/40">
                     Yes, Delete
                 </button>
                 <button onclick="hideDeleteConfirm()"
-                        class="bg-gray-700 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-600 transition duration-300 ease-in-out button-hover-animation shadow-md hover:shadow-gray-600/40">
+                    class="bg-gray-700 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-600 transition duration-300 ease-in-out button-hover-animation shadow-md hover:shadow-gray-600/40">
                     Cancel
                 </button>
             </div>
@@ -355,4 +396,5 @@
         });
     </script>
 </body>
+
 </html>

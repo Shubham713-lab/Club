@@ -3,146 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>All Registered Users</title>
-    <!-- Tailwind CSS CDN -->
+    <title>All Users</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #000000; /* Black background */
-            margin: 0;
-            min-height: 100vh;
-            color: #E5E7EB; /* Light gray for general text */
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Custom animations */
-        @keyframes pulse-slow {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-        .animate-pulse-slow {
-            animation: pulse-slow 3s infinite ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-            animation: fadeIn 0.6s ease-out forwards;
-        }
-
-        /* Button Hover Effects */
-        .button-hover-animation:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(103, 232, 249, 0.4);
-        }
-
-        /* Table specific styling */
-        .table-container {
-            overflow-x: auto; /* Enable horizontal scrolling for table on small screens */
-            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-            border-radius: 0.75rem; /* Match card border-radius */
-            border: 1px solid #1F2937; /* Subtle border for the container */
-        }
-
-        .table {
-            width: 100%;
-            border-collapse: separate; /* Allows border-radius on cells */
-            border-spacing: 0; /* Remove space between cells */
-        }
-
-        .table th,
-        .table td {
-            padding: 1rem 1.25rem;
-            text-align: left;
-            border-bottom: 1px solid #1F2937; /* Darker border for rows */
-        }
-
-        .table th {
-            background-color: #1a1a1a; /* Darker header background */
-            color: #67E8F9; /* Accent color for headers */
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.875rem; /* text-sm */
-            letter-spacing: 0.05em;
-        }
-
-        .table tbody tr:last-child td {
-            border-bottom: none; /* No border for the last row */
-        }
-
-        .table tbody tr:nth-child(odd) {
-            background-color: #0a0a0a; /* Slightly different background for odd rows */
-        }
-
-        .table tbody tr:nth-child(even) {
-            background-color: #111827; /* Tailwind's gray-900 equivalent */
-        }
-
-        .table tbody tr:hover {
-            background-color: #1F2937; /* Hover effect for rows */
-            transition: background-color 0.2s ease-in-out;
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #000000; color: #E5E7EB; }
+        .button-hover-animation:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(103, 232, 249, 0.4); }
     </style>
 </head>
-<body>
-    <!-- Navigation Bar -->
+<body class="min-h-screen flex flex-col">
     <nav class="bg-gray-900 p-4 shadow-lg sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
-            <span id="logo" class="text-[#67E8F9] text-3xl font-extrabold tracking-wide">Code Forge - Admin</span>
-            <a href="{{ url_for('admin_dashboard') }}">
-                <button class="bg-[#EF4444] text-white px-6 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-md hover:shadow-[#EF4444]/40">
-                    <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
-                </button>
-            </a>
+            <span class="text-[#67E8F9] text-3xl font-extrabold tracking-wide">Code Forge - Admin</span>
+            <div class="flex space-x-4">
+                <a href="{{ url_for('admin_dashboard') }}">
+                    <button class="bg-gray-700 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-600 transition duration-300 ease-in-out button-hover-animation shadow-md hover:shadow-gray-600/40">
+                        <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+                    </button>
+                </a>
+                <a href="{{ url_for('logout') }}">
+                    <button class="bg-[#EF4444] text-white px-6 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out delete-button-hover shadow-md hover:shadow-[#EF4444]/40">
+                        <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                    </button>
+                </a>
+            </div>
         </div>
     </nav>
 
-    <div class="container mx-auto py-12 px-4 sm:px-6 lg:px-8 animate-fade-in">
-        <h2 class="text-5xl font-extrabold text-center mb-10 text-[#67E8F9] leading-tight animate-pulse-slow">
-            All Registered Users
-        </h2>
+    <div class="container mx-auto py-12 px-4 sm:px-6 lg:px-8 flex-grow">
+        <h1 class="text-5xl font-extrabold text-center mb-10 text-[#67E8F9] leading-tight">All Registered Users</h1>
 
-        <div class="bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-800">
-            <div class="table-container">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>User ID</th>
-                            <th>Name</th>
-                            <th>Role</th>
-                            <th>Email</th>
-                            <th>Contact</th>
-                            <th>Address</th>
-                            <th>College</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% if users %}
-                            {% for user in users %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-4">
+                    {% for category, message in messages %}
+                        <div class="p-3 mb-2 rounded-md text-sm {% if category == 'success' %}bg-green-600{% elif category == 'danger' %}bg-red-600{% elif category == 'info' %}bg-blue-600{% elif category == 'warning' %}bg-yellow-600{% endif %} text-white">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div class="bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-800 col-span-full">
+                <h2 class="text-3xl font-bold text-white mb-6 text-center">Students</h2>
+                {% if users %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-gray-800 rounded-lg overflow-hidden">
+                        <thead class="bg-gray-700">
                             <tr>
-                                <td class="font-semibold text-white">{{ user[0] }}</td>
-                                <td class="text-gray-300">{{ user[1] }}</td>
-                                <td class="text-gray-300">{{ user[2] }}</td>
-                                <td class="text-gray-300">{{ user[3] }}</td>
-                                <td class="text-gray-300">{{ user[4] or '—' }}</td>
-                                <td class="text-gray-300">{{ user[5] or '—' }}</td>
-                                <td class="text-gray-300">{{ user[6] }}</td>
+                                <th class="py-3 px-4 text-left text-sm font-semibold text-gray-300">User ID</th>
+                                <th class="py-3 px-4 text-left text-sm font-semibold text-gray-300">Name</th>
+                                <th class="py-3 px-4 text-left text-sm font-semibold text-gray-300">College</th>
+                                <th class="py-3 px-4 text-left text-sm font-semibold text-gray-300">Email</th>
+                                <th class="py-3 px-4 text-left text-sm font-semibold text-gray-300">Contact</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr class="border-t border-gray-700 hover:bg-gray-700 transition duration-200">
+                                <td class="py-3 px-4 text-sm text-gray-300">{{ user.user_id }}</td>
+                                <td class="py-3 px-4 text-sm text-gray-300">{{ user.name }}</td>
+                                <td class="py-3 px-4 text-sm text-gray-300">{{ user.college }}</td>
+                                <td class="py-3 px-4 text-sm text-gray-300">{{ user.email }}</td>
+                                <td class="py-3 px-4 text-sm text-gray-300">{{ user.contact }}</td>
                             </tr>
                             {% endfor %}
-                        {% else %}
-                        <tr>
-                            <td colspan="7" class="text-center text-gray-400 py-4">No registered users found.</td>
-                        </tr>
-                        {% endif %}
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center text-gray-400">No students registered yet.</p>
+                {% endif %}
+            </div>
+
+            <div class="bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-800 col-span-full mt-8">
+                <h2 class="text-3xl font-bold text-white mb-6 text-center">Mentors</h2>
+                {% if mentors %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-gray-800 rounded-lg overflow-hidden">
+                        <thead class="bg-gray-700">
+                            <tr>
+                                <th class="py-3 px-4 text-left text-sm font-semibold text-gray-300">User ID</th>
+                                <th class="py-3 px-4 text-left text-sm font-semibold text-gray-300">Name</th>
+                                <th class="py-3 px-4 text-left text-sm font-semibold text-gray-300">College</th>
+                                <th class="py-3 px-4 text-left text-sm font-semibold text-gray-300">Email</th>
+                                <th class="py-3 px-4 text-left text-sm font-semibold text-gray-300">Expertise</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mentor in mentors %}
+                            <tr class="border-t border-gray-700 hover:bg-gray-700 transition duration-200">
+                                <td class="py-3 px-4 text-sm text-gray-300">{{ mentor.user_id }}</td>
+                                <td class="py-3 px-4 text-sm text-gray-300">{{ mentor.name }}</td>
+                                <td class="py-3 px-4 text-sm text-gray-300">{{ mentor.college }}</td>
+                                <td class="py-3 px-4 text-sm text-gray-300">{{ mentor.email }}</td>
+                                <td class="py-3 px-4 text-sm text-gray-300">{{ mentor.expertise }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center text-gray-400">No mentors registered yet.</p>
+                {% endif %}
             </div>
         </div>
     </div>
