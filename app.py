@@ -986,9 +986,7 @@ def download_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
 
 
-# app.py
 
-# ... (other imports and code) ...
 
 @app.route('/brainstorm', methods=['GET', 'POST'])
 def brainstorm():
