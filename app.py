@@ -21,17 +21,10 @@ import os
 import psycopg2
 from psycopg2.extras import DictCursor
 
-# Ensure these environment variables are set in your deployment environment
 DATABASE_URL = os.getenv("DATABASE_URL")
-EMAIL_ADDRESS = os.environ.get("EMAIL_USER")
-EMAIL_PASSWORD = os.environ.get("EMAIL_PASS")
 
 def get_db_connection():
     """Establishes a connection to the PostgreSQL database."""
-    if not DATABASE_URL:
-        print("[CONFIG ERROR] DATABASE_URL environment variable not set.")
-        flash("Database configuration error: Please contact support.", "danger")
-        return None
     try:
         conn = psycopg2.connect(DATABASE_URL, cursor_factory=DictCursor)
         return conn
@@ -43,7 +36,7 @@ def get_db_connection():
 app = Flask(__name__)
 socketio = SocketIO(app, async_mode='eventlet')
 # Use environment variable for secret key (best practice)
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'a_very_secret_default_key_replace_me') # Changed default for security
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'code_forge_123')
 
 # Cloudinary Configuration
 cloudinary.config(
@@ -51,12 +44,10 @@ cloudinary.config(
     api_key = os.environ.get('API_KEY'),
     api_secret = os.environ.get('API_SECRET')
 )
-if not all([os.environ.get('CLOUD_NAME'), os.environ.get('API_KEY'), os.environ.get('API_SECRET')]):
-    print("[CONFIG ERROR] Cloudinary credentials not fully set in environment variables.")
 
 # Allowed extensions for submissions and images (still good for client-side validation)
-ALLOWED_SUBMISSION_EXTENSIONS = {'pdf', 'ppt', 'pptx', 'doc', 'docx'}
-ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+ALLOWED_SUBMISSION_EXTENSIONS = {'pdf', 'ppt', 'pptx', 'doc', 'docx'} # Added doc/docx
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'} # Added webp
 
 def allowed_file(filename, allowed_extensions):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
@@ -69,12 +60,11 @@ def get_user_by_id(user_id):
         return None
     
     cur = conn.cursor(cursor_factory=DictCursor)
-    user_data = None
     try:
         cur.execute("SELECT user_id, name, college, roll_no, email, address, contact, role, year, branch, department, password FROM users WHERE user_id = %s", (user_id,))
         user_data = cur.fetchone()
         if user_data:
-            return dict(user_data) # Convert DictRow to a standard dictionary
+            return dict(user_data)
         return None
     except psycopg2.Error as e:
         print(f"Database error in get_user_by_id: {e}")
@@ -96,9 +86,7 @@ def submit_stage(event_id, stage_id):
     if conn is None:
         return redirect(url_for('student_registered_events'))
 
-    cur = conn.cursor(cursor_factory=DictCursor) # Use DictCursor for fetching stage details
-    stage_title = None
-    deadline = None
+    cur = conn.cursor()
 
     try:
         cur.execute("SELECT stage_title, deadline FROM event_stages WHERE id = %s", (stage_id,))
@@ -107,8 +95,7 @@ def submit_stage(event_id, stage_id):
             flash("Invalid stage", "danger")
             return redirect(url_for('student_registered_events'))
 
-        stage_title = stage['stage_title']
-        deadline = stage['deadline']
+        stage_title, deadline = stage
 
         if datetime.now() > datetime.strptime(str(deadline), '%Y-%m-%d'):
             flash("Submission deadline has passed!", "danger")
@@ -127,19 +114,17 @@ def submit_stage(event_id, stage_id):
             file = request.files.get('submission_file')
 
             submission_file_url = None
-            if file and file.filename:
-                if allowed_file(file.filename, ALLOWED_SUBMISSION_EXTENSIONS):
-                    try:
-                        upload_result = cloudinary.uploader.upload(file, resource_type="raw", folder="submissions") 
-                        submission_file_url = upload_result['secure_url']
-                    except Exception as e:
-                        flash(f"Submission file upload failed: {e}", "danger")
-                        print(f"CLOUDINARY SUBMISSION UPLOAD ERROR: {e}")
-                        # If upload fails, allow text submission if available, but warn about file
-                else:
-                    flash("Invalid file type. Only PDF, PPT, PPTX, DOC, DOCX allowed.", "danger")
-                    # Still render the template with correct stage info if file type is wrong
-                    return render_template('submit_stage.html', stage={'stage_title': stage_title, 'deadline': deadline}, event_id=event_id, stage_id=stage_id)
+            if file and file.filename and allowed_file(file.filename, ALLOWED_SUBMISSION_EXTENSIONS):
+                try:
+                    # Upload to Cloudinary. resource_type='raw' for non-image files.
+                    upload_result = cloudinary.uploader.upload(file, resource_type="raw", folder="submissions") 
+                    submission_file_url = upload_result['secure_url']
+                except Exception as e:
+                    flash(f"Submission file upload failed: {e}", "danger")
+                    print(f"CLOUDINARY SUBMISSION UPLOAD ERROR: {e}")
+            elif file and file.filename and not allowed_file(file.filename, ALLOWED_SUBMISSION_EXTENSIONS):
+                 flash("Invalid file type. Only PDF, PPT, PPTX, DOC, DOCX allowed.", "danger")
+                 return render_template('submit_stage.html', stage=(stage_title, deadline), event_id=event_id, stage_id=stage_id)
 
 
             cur.execute('''
@@ -162,8 +147,7 @@ def submit_stage(event_id, stage_id):
         if cur: cur.close()
         if conn: conn.close()
     
-    # Pass stage as a dictionary for template consistency
-    return render_template('submit_stage.html', stage={'stage_title': stage_title, 'deadline': deadline}, event_id=event_id, stage_id=stage_id)
+    return render_template('submit_stage.html', stage=(stage_title, deadline), event_id=event_id, stage_id=stage_id)
 
 
 # ---------- Home Page ----------
@@ -172,52 +156,21 @@ def home():
     """Renders the home page with a list of events."""
     conn = get_db_connection()
     if conn is None:
-        return render_template('home.html', events=[], results={}) # Pass empty results too
+        return render_template('home.html', events=[])
 
-    cur = conn.cursor(cursor_factory=DictCursor)
-    events_data = []
-    processed_results = defaultdict(list)
+    cur = conn.cursor(cursor_factory=DictCursor) # Use DictCursor for fetching by name
     try:
-        # Select image_url from events table
+        # Select image_url instead of image_path
         cur.execute("SELECT id, title, description, date, short_description, image_url FROM events ORDER BY date DESC")
-        events_data = cur.fetchall()
-
-        # Get winner results grouped by event
-        cur.execute('''
-            SELECT event_title, position, winner_name, winner_email
-            FROM event_results
-            ORDER BY event_title,
-                     CASE 
-                         WHEN position LIKE '1%' THEN 1
-                         WHEN position LIKE '2%' THEN 2
-                         WHEN position LIKE '3%' THEN 3
-                         ELSE 4
-                     END
-        ''')
-        raw_results = cur.fetchall()
-
-        for result_row in raw_results:
-            event_title = result_row['event_title']
-            position = result_row['position']
-            name = result_row['winner_name']
-            email = result_row['winner_email']
-            if event_title not in processed_results:
-                processed_results[event_title] = []
-            # Ensure the structure matches what the template expects: [name, position, email]
-            processed_results[event_title].append([name, position, email])
-
+        events = cur.fetchall()
     except psycopg2.Error as e:
-        flash(f"Error loading events or results for home page: {e}", "danger")
-        print(f"HOME PAGE DATA ERROR: {e}")
-        events_data = []
-        processed_results = {}
+        flash(f"Error loading events: {e}", "danger")
+        print(f"HOME PAGE EVENTS ERROR: {e}")
+        events = []
     finally:
         if cur: cur.close()
         if conn: conn.close()
-    
-    # Convert DictRows to dictionaries for the template
-    events_for_template = [dict(event) for event in events_data]
-    return render_template('home.html', events=events_for_template, results=dict(processed_results))
+    return render_template('home.html', events=events)
 
 # ---------- Login ----------
 @app.route('/login', methods=['GET', 'POST'])
@@ -229,7 +182,7 @@ def login():
 
         conn = get_db_connection()
         if conn is None:
-            flash("Database connection failed. Please try again later.", "danger")
+            flash("Database connection failed.", "danger")
             return render_template('login.html')
 
         cur = conn.cursor(cursor_factory=DictCursor)
@@ -280,13 +233,16 @@ def login():
 # ---------- OTP Function ----------
 def send_otp(receiver_email, otp):
     """Sends an OTP to the specified email address."""
+    EMAIL_ADDRESS = os.environ.get("EMAIL_USER")
+    EMAIL_PASSWORD = os.environ.get("EMAIL_PASS")
+
     if not EMAIL_ADDRESS or not EMAIL_PASSWORD:
         print("[CONFIG ERROR] Email credentials not set in environment variables (EMAIL_USER, EMAIL_PASS).")
         flash("Email sending failed: Server not configured. Contact admin.", "danger")
         return False
 
     msg = EmailMessage()
-    msg['Subject'] = 'OTP Verification - Code Forge' # Changed club name
+    msg['Subject'] = 'OTP Verification - College Club'
     msg['From'] = EMAIL_ADDRESS
     msg['To'] = receiver_email
     msg.set_content(f'Your OTP is: {otp}\n\nThis OTP is valid for 10 minutes.\nDo not share it with anyone.')
@@ -296,6 +252,7 @@ def send_otp(receiver_email, otp):
             smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
             smtp.send_message(msg)
         print(f"[SUCCESS] OTP sent to {receiver_email}")
+        flash("OTP sent to your email!", "info")
         return True
 
     except SMTPAuthenticationError as e:
@@ -321,19 +278,15 @@ def view_all_users():
         return render_template('view_all_users.html', users=[], mentors=[])
 
     cur = conn.cursor(cursor_factory=DictCursor)
-    all_students = []
+    all_users = []
     all_mentors = []
 
     try:
         cur.execute("SELECT user_id, name, college, email, role, contact FROM users ORDER BY name ASC")
-        all_students = cur.fetchall() # Fetches DictRows
+        all_users = cur.fetchall()
 
         cur.execute("SELECT user_id, name, college, email, expertise FROM mentors ORDER BY name ASC")
-        all_mentors = cur.fetchall() # Fetches DictRows
-
-        # Convert DictRows to plain dictionaries for safety/flexibility if needed by template
-        all_students = [dict(s) for s in all_students]
-        all_mentors = [dict(m) for m in all_mentors]
+        all_mentors = cur.fetchall()
 
     except psycopg2.Error as e:
         flash(f"Database error fetching users: {e}", "danger")
@@ -342,7 +295,7 @@ def view_all_users():
         if cur: cur.close()
         if conn: conn.close()
 
-    return render_template('view_all_users.html', users=all_students, mentors=all_mentors)
+    return render_template('view_all_users.html', users=all_users, mentors=all_mentors)
 
 
 @app.route('/delete_event/<int:event_id>', methods=['GET', 'POST'])
@@ -357,25 +310,19 @@ def delete_event(event_id):
         flash("Database connection failed. Cannot delete event.", "danger")
         return redirect(url_for('admin_dashboard'))
 
-    cur = conn.cursor(cursor_factory=DictCursor)
+    cur = conn.cursor(cursor_factory=DictCursor) # Use DictCursor to get event title/url
 
     try:
         # Get event title and image_url to potentially delete from Cloudinary if desired
         cur.execute("SELECT title, image_url FROM events WHERE id = %s", (event_id,))
         event_info = cur.fetchone()
         
-        # NOTE: Cloudinary deletion
-        # If you want to delete the image from Cloudinary when the event is deleted,
-        # you would add code here. Example:
-        # if event_info and event_info['image_url']:
-        #     public_id = event_info['image_url'].split('/')[-1].split('.')[0] # Extract public_id
-        #     cloudinary.uploader.destroy(f"event_images/{public_id}") # Assuming 'event_images' folder
 
-        # Delete event results (linked by event_title)
-        if event_info:
+        # Delete event results (linked by event_title, not event_id)
+        if event_info: # Only delete if event_info was found
             cur.execute("DELETE FROM event_results WHERE event_title = %s", (event_info['title'],))
         
-        # Delete the event itself (PostgreSQL cascade will handle stages, registrations, submissions)
+        # Delete the event itself (cascades to stages, registrations, submissions)
         cur.execute("DELETE FROM events WHERE id = %s", (event_id,))
         
         conn.commit()
@@ -385,10 +332,6 @@ def delete_event(event_id):
         conn.rollback()
         flash(f"Database error deleting event: {e}", "danger")
         print(f"DELETE EVENT ERROR: {e}")
-    except Exception as e:
-        conn.rollback() # Ensure rollback on general errors too
-        flash(f"An unexpected error occurred during event deletion: {e}", "danger")
-        print(f"UNEXPECTED DELETE EVENT ERROR: {e}")
     finally:
         if cur: cur.close()
         if conn: conn.close()
@@ -407,27 +350,25 @@ def register_student():
         email = request.form['email']
         otp_input = request.form.get('otp')
 
-        # Store in session temporarily
         session['name'] = name
         session['college'] = college
         session['roll_no'] = roll_no
         session['email'] = email
 
         if "marwadi" not in college.lower():
-            if otp_input: # User submitted OTP
+            if otp_input:
                 if otp_input == session.get('otp'):
                     flash("OTP Verified", "success")
                     return redirect(url_for('register_details'))
                 else:
                     flash("Invalid OTP", "danger")
                     return render_template('register_step1.html', show_otp=True)
-            else: # User requested OTP
+            else:
                 otp = str(random.randint(100000, 999999))
                 session['otp'] = otp
-                if send_otp(email, otp): # Only flash if email sending was successful
-                    pass # send_otp already flashes success/info
+                send_otp(email, otp)
                 return render_template('register_step1.html', show_otp=True)
-        else: # If college is Marwadi, no OTP needed, proceed
+        else:
             return redirect(url_for('register_details'))
 
     return render_template('register_step1.html', show_otp=False)
@@ -436,11 +377,6 @@ def register_student():
 @app.route('/register_details', methods=['GET', 'POST'])
 def register_details():
     """Handles the second step of student registration (collects detailed info and saves to DB)."""
-    # Ensure session data exists from step 1
-    if 'name' not in session or 'email' not in session:
-        flash("Please complete the first step of registration.", "danger")
-        return redirect(url_for('register_student'))
-
     if request.method == 'POST':
         address = request.form['address']
         contact = request.form['contact']
@@ -452,10 +388,6 @@ def register_details():
 
         if password != confirm_password:
             flash("Passwords do not match!", "danger")
-            return render_template('register_details.html')
-
-        if len(password) < 6:
-            flash("Password must be at least 6 characters long.", "danger")
             return render_template('register_details.html')
 
         hashed_password = generate_password_hash(password)
@@ -478,7 +410,7 @@ def register_details():
                     session['email'],
                     address,
                     contact,
-                    'student', # role is 'student'
+                    'student',
                     year,
                     branch,
                     department,
@@ -487,25 +419,14 @@ def register_details():
             )
             conn.commit()
 
-            # Clear temporary registration data from session
-            session.pop('name', None)
-            session.pop('college', None)
-            session.pop('roll_no', None)
-            session.pop('email', None)
-            session.pop('otp', None) # Clear OTP after successful registration
-
-            session['user'] = session['name'] # This will be the name from registration
+            session['user'] = session['name']
             session['user_id'] = user_id
             session['role'] = 'student'
             flash(f"Student Registration complete! Your User ID is {user_id}", "success")
             return redirect(url_for('dashboard'))
         except psycopg2.Error as e:
             conn.rollback()
-            # Check for unique constraint violation (e.g., duplicate email/roll_no if unique)
-            if 'unique' in str(e).lower():
-                flash("A user with this email or roll number already exists.", "danger")
-            else:
-                flash(f"Registration failed: {e}", "danger")
+            flash(f"Registration failed: {e}", "danger")
             print(f"STUDENT REGISTRATION ERROR: {e}")
         finally:
             if cur: cur.close()
@@ -528,10 +449,6 @@ def register_mentor():
 
         if password != confirm_password:
             flash("Passwords do not match!", "danger")
-            return render_template('register_mentor.html')
-
-        if len(password) < 6:
-            flash("Password must be at least 6 characters long.", "danger")
             return render_template('register_mentor.html')
 
         hashed_password = generate_password_hash(password)
@@ -557,10 +474,7 @@ def register_mentor():
             return redirect(url_for('dashboard'))
         except psycopg2.Error as e:
             conn.rollback()
-            if 'unique' in str(e).lower():
-                flash("A mentor with this email already exists.", "danger")
-            else:
-                flash(f"Registration failed: {e}", "danger")
+            flash(f"Registration failed: {e}", "danger")
             print(f"MENTOR REGISTRATION ERROR: {e}")
         finally:
             if cur: cur.close()
@@ -580,7 +494,6 @@ def dashboard():
             return redirect(url_for('admin_dashboard'))
         if role == 'mentor':
             return redirect(url_for('mentor_dashboard'))
-    flash("Please log in to access the dashboard.", "info")
     return redirect(url_for('login'))
 
 
@@ -608,19 +521,29 @@ def mentor_dashboard():
 
         for event_row in events_raw:
             event_id = event_row['id']
-            # Convert DictRow to a plain dictionary for cleaner access in template (optional, but good practice)
-            event_data = dict(event_row) 
-            event_data['stages'] = [] # Initialize stages list
+            event_data = {
+                'id': event_id,
+                'title': event_row['title'],
+                'description': event_row['description'],
+                'date': event_row['date'],
+                'short_description': event_row['short_description'],
+                'image_url': event_row['image_url'], # Fetch image_url
+                'stages': []
+            }
 
             cur.execute("SELECT id, stage_title, deadline FROM event_stages WHERE event_id = %s ORDER BY deadline ASC", (event_id,))
             stages_for_event = cur.fetchall()
             for stage_row in stages_for_event:
-                event_data['stages'].append(dict(stage_row)) # Convert DictRow to dict
+                event_data['stages'].append({
+                    'id': stage_row['id'],
+                    'stage_title': stage_row['stage_title'],
+                    'deadline': stage_row['deadline']
+                })
             events_for_template.append(event_data)
 
         # Get all brainstorm rooms
-        cur.execute("SELECT room_id, title, created_at FROM brainstorm_rooms ORDER BY created_at DESC")
-        rooms = [dict(r) for r in cur.fetchall()] # Convert to list of dicts
+        cur.execute("SELECT room_id, title, created_by FROM brainstorm_rooms ORDER BY created_at DESC")
+        rooms = cur.fetchall()
 
         # Get result announcements
         cur.execute('''
@@ -640,7 +563,7 @@ def mentor_dashboard():
             event_title = result_row['event_title']
             position = result_row['position']
             winner_name = result_row['winner_name']
-            processed_results[event_title].append([winner_name, position, ""]) # No email in this query, pass empty string
+            processed_results[event_title].append([winner_name, position, ""])
 
     except psycopg2.Error as e:
         flash(f"Database error on mentor dashboard: {e}", "danger")
@@ -664,10 +587,6 @@ def announce_winner():
         return redirect(url_for('login'))
 
     event_title = request.form['event_title']
-    if not event_title:
-        flash("Event title is required to announce winners.", "danger")
-        return redirect(url_for('admin_dashboard'))
-
     conn = get_db_connection()
     if conn is None:
         return redirect(url_for('admin_dashboard'))
@@ -675,27 +594,16 @@ def announce_winner():
     cur = conn.cursor()
 
     try:
-        # It's good practice to clear previous winners for this event before inserting new ones
-        cur.execute("DELETE FROM event_results WHERE event_title = %s", (event_title,))
-
-        found_winner = False
         for i in range(1, 4):
             position = request.form.get(f'position{i}')
             name = request.form.get(f'name{i}')
             email = request.form.get(f'email{i}')
 
-            if name and position: # Email is optional based on your form/schema
+            if name and email:
                 cur.execute('''
                     INSERT INTO event_results (event_title, position, winner_name, winner_email)
                     VALUES (%s, %s, %s, %s)
                 ''', (event_title, position, name, email))
-                found_winner = True
-        
-        if not found_winner:
-            flash("No winners were entered. Please fill in at least one winner's name and position.", "warning")
-            conn.rollback() # Rollback the delete if no new winners were added
-            return redirect(url_for('admin_dashboard'))
-
 
         conn.commit()
         flash("Winners announced successfully!", "success")
@@ -712,13 +620,12 @@ def announce_winner():
 @app.route('/event/<int:event_id>', methods=['GET', 'POST'])
 def event_detail(event_id):
     """Displays event details and handles student registration for an event."""
-    # This route can be accessed by non-logged in users or other roles to view details
-    # but registration requires student role.
-    user_is_student = ('user_id' in session and session.get('role') == 'student')
+    if 'user' not in session or session.get('role') != 'student':
+        flash("Unauthorized access", "danger")
+        return redirect(url_for('login'))
 
     conn = get_db_connection()
     if conn is None:
-        flash("Database connection failed. Please try again later.", "danger")
         return render_template('event_detail.html', event=None, registered=False)
 
     cur = conn.cursor(cursor_factory=DictCursor)
@@ -729,25 +636,12 @@ def event_detail(event_id):
         # Fetch event info - select image_url
         cur.execute("SELECT id, title, description, date, short_description, image_url FROM events WHERE id = %s", (event_id,))
         event = cur.fetchone()
-        if event:
-            event = dict(event) # Convert to dictionary
 
-        if user_is_student: # Only check registration status if user is a student
-            cur.execute("SELECT id FROM event_registrations WHERE user_id = %s AND event_id = %s", 
-                        (session['user_id'], event_id))
-            already_registered = cur.fetchone() is not None # Check if any row was returned
+        cur.execute("SELECT id FROM event_registrations WHERE user_id = %s AND event_id = %s", 
+                    (session['user_id'], event_id))
+        already_registered = cur.fetchone()
 
-        if request.method == 'POST':
-            if not user_is_student:
-                flash("Please log in as a student to register for events.", "danger")
-                return redirect(url_for('login'))
-            
-            if already_registered:
-                flash("You are already registered for this event.", "info")
-                # No redirect here, keep on the page, or redirect to registered events
-                return render_template('event_detail.html', event=event, registered=already_registered)
-
-
+        if request.method == 'POST' and not already_registered:
             cur.execute("INSERT INTO event_registrations (user_id, event_id) VALUES (%s, %s)",
                         (session['user_id'], event_id))
             conn.commit()
@@ -774,10 +668,10 @@ def student_registered_events():
 
     conn = get_db_connection()
     if conn is None:
-        return render_template('registered_events.html', events=[], stages={})
+        return render_template('registered_events.html', events=[])
 
     cur = conn.cursor(cursor_factory=DictCursor)
-    events_for_template = []
+    events_with_stages_and_submissions = []
 
     try:
         # Get all events the student is registered for - select image_url
@@ -793,8 +687,15 @@ def student_registered_events():
 
         for event_row in registered_events_raw:
             event_id = event_row['id']
-            event_data = dict(event_row) # Convert DictRow to dictionary
-            event_data['stages'] = [] # Initialize stages list
+            event_data = {
+                'id': event_row['id'],
+                'title': event_row['title'],
+                'description': event_row['description'],
+                'date': event_row['date'],
+                'short_description': event_row['short_description'],
+                'image_url': event_row['image_url'], # Fetch image_url
+                'stages': []
+            }
 
             cur.execute("SELECT id, stage_title, deadline FROM event_stages WHERE event_id = %s ORDER BY deadline ASC", (event_id,))
             stages_for_event = cur.fetchall()
@@ -820,7 +721,7 @@ def student_registered_events():
                 }
                 event_data['stages'].append(stage_details)
 
-            events_for_template.append(event_data)
+            events_with_stages_and_submissions.append(event_data)
 
     except psycopg2.Error as e:
         flash(f"Database error fetching registered events: {e}", "danger")
@@ -829,16 +730,7 @@ def student_registered_events():
         if cur: cur.close()
         if conn: conn.close()
 
-    # The template expects 'events' to be a list of events, each containing its stages
-    # It also expects 'stages' as a separate dict. I'll modify the template later if needed.
-    # For now, events_for_template already contains stages nested within it.
-    # Let's match the old structure if your template relies on it:
-    # `stages` will be a dictionary where keys are event_id and values are list of stages
-    stages_dict_for_template = {}
-    for event in events_for_template:
-        stages_dict_for_template[event['id']] = event['stages'] # Extract stages for the separate dict
-
-    return render_template('registered_events.html', events=events_for_template, stages=stages_dict_for_template)
+    return render_template('registered_events.html', events=events_with_stages_and_submissions)
 
 
 # ---------- Admin ----------
@@ -864,38 +756,31 @@ def admin_dashboard():
             image_file = request.files.get('event_image')
             
             image_url = None
-            if image_file and image_file.filename:
-                if allowed_file(image_file.filename, ALLOWED_IMAGE_EXTENSIONS):
-                    try:
-                        upload_result = cloudinary.uploader.upload(image_file, folder="event_images") 
-                        image_url = upload_result['secure_url']
-                    except Exception as e:
-                        flash(f"Event image upload failed: {e}", "danger")
-                        print(f"CLOUDINARY EVENT IMAGE UPLOAD ERROR: {e}")
-                else:
-                    flash("Invalid image file type. Only PNG, JPG, JPEG, GIF, WEBP allowed.", "danger")
-                    # Allow form to be rendered again with error without losing input (if you were to re-render form)
-                    # For now, just flash and continue with null image_url
+            if image_file and image_file.filename and allowed_file(image_file.filename, ALLOWED_IMAGE_EXTENSIONS):
+                try:
+                    upload_result = cloudinary.uploader.upload(image_file, folder="event_images") 
+                    image_url = upload_result['secure_url']
+                except Exception as e:
+                    flash(f"Event image upload failed: {e}", "danger")
+                    print(f"CLOUDINARY EVENT IMAGE UPLOAD ERROR: {e}")
+            elif image_file and image_file.filename and not allowed_file(image_file.filename, ALLOWED_IMAGE_EXTENSIONS):
+                flash("Invalid image file type. Only PNG, JPG, JPEG, GIF, WEBP allowed.", "danger")
 
-            # Insert new event - use image_url column
+            # Insert new event - use image_url
             cur.execute('''INSERT INTO events (title, short_description, description, date, image_url)
-                            VALUES (%s, %s, %s, %s, %s) RETURNING id''', # RETURNING id is useful for stages
+                            VALUES (%s, %s, %s, %s, %s) RETURNING id''', 
                         (title, short_desc, description, date, image_url))
-            event_id = cur.fetchone()['id'] # Get the newly inserted event's ID
+            event_id = cur.fetchone()['id']
 
             stages = request.form.getlist('stage_title[]')
             deadlines = request.form.getlist('deadline[]')
 
-            if stages and deadlines and len(stages) == len(deadlines):
-                for stage_title, deadline in zip(stages, deadlines):
-                    if stage_title and deadline: # Only insert if both are provided
-                        cur.execute('INSERT INTO event_stages (event_id, stage_title, deadline) VALUES (%s, %s, %s)',
-                                    (event_id, stage_title, deadline))
-            else:
-                flash("No stages provided or mismatch in stage titles/deadlines.", "warning")
+            for stage_title, deadline in zip(stages, deadlines):
+                cur.execute('INSERT INTO event_stages (event_id, stage_title, deadline) VALUES (%s, %s, %s)',
+                            (event_id, stage_title, deadline))
 
             conn.commit()
-            flash("Event with stages created successfully!", "success")
+            flash("Hackathon with stages created successfully!", "success")
 
         # Get all events for display - select image_url
         cur.execute("SELECT id, title, description, date, short_description, image_url FROM events ORDER BY date DESC")
@@ -904,7 +789,6 @@ def admin_dashboard():
         event_stats = []
         for event_row in events:
             event_id = event_row['id']
-            event_data = dict(event_row) # Convert to dictionary
 
             cur.execute("SELECT COUNT(*) FROM event_registrations WHERE event_id = %s", (event_id,))
             registered = cur.fetchone()[0]
@@ -913,7 +797,7 @@ def admin_dashboard():
             submitted = cur.fetchone()[0]
 
             event_stats.append({
-                'event': event_data, # Pass event as a dictionary
+                'event': event_row,
                 'registered': registered,
                 'submitted': submitted
             })
@@ -939,30 +823,28 @@ def view_progress(event_id):
 
     conn = get_db_connection()
     if conn is None:
-        flash("Database connection failed. Cannot view progress.", "danger")
         return redirect(url_for('admin_dashboard'))
 
     cur = conn.cursor(cursor_factory=DictCursor)
     progress = []
-    stages_list = [] # Renamed to avoid conflict with `stages` map
+    stages = []
 
     try:
-        cur.execute("SELECT id, stage_title FROM event_stages WHERE event_id = %s ORDER BY id ASC", (event_id,))
+        cur.execute("SELECT id, stage_title FROM event_stages WHERE event_id = %s", (event_id,))
         stage_data = cur.fetchall()
 
         if not stage_data:
             flash("No stages found for this event.", "warning")
             return redirect(url_for('admin_dashboard'))
 
-        stages_list = [row['stage_title'] for row in stage_data] # list of stage titles
-        stage_id_map = {row['stage_title']: row['id'] for row in stage_data} # title -> id
+        stages = [row['stage_title'] for row in stage_data]
+        stage_id_map = {row['stage_title']: row['id'] for row in stage_data}
 
         cur.execute('''
             SELECT u.user_id, u.name, u.email, u.college, u.roll_no
             FROM event_registrations r
             JOIN users u ON r.user_id = u.user_id
             WHERE r.event_id = %s
-            ORDER BY u.name ASC
         ''', (event_id,))
         participants = cur.fetchall()
 
@@ -977,7 +859,7 @@ def view_progress(event_id):
                 'stage_status': {}
             }
 
-            for stage_title in stages_list:
+            for stage_title in stages:
                 stage_id = stage_id_map[stage_title]
 
                 # Select submission_file_url
@@ -990,12 +872,12 @@ def view_progress(event_id):
                 if result and result['submission_file_url']:
                     file_url = result['submission_file_url']
                     user_info['stage_status'][stage_title] = {
-                        'status': '✅', # Indicate completion
+                        'status': '', 
                         'file': file_url # This is now a URL
                     }
                 else:
                     user_info['stage_status'][stage_title] = {
-                        'status': '❌', # Indicate not submitted
+                        'status': '❌',
                         'file': None
                     }
 
@@ -1007,10 +889,9 @@ def view_progress(event_id):
     finally:
         if cur: cur.close()
         if conn: conn.close()
-    return render_template('view_progress.html', progress=progress, stages=stages_list, event_id=event_id)
+    return render_template('view_progress.html', progress=progress, stages=stages, event_id=event_id)
 
 
-# Brainstorming Related Routes
 @app.route('/brainstorm', methods=['GET', 'POST'])
 def brainstorm():
     """Handles creation and listing of brainstorm rooms."""
@@ -1029,10 +910,6 @@ def brainstorm():
     try:
         if request.method == 'POST':
             room_title = request.form['room_title']
-            if not room_title:
-                flash("Room title cannot be empty.", "danger")
-                return redirect(url_for('brainstorm')) # Redirect back to display existing rooms
-
             room_id = str(uuid.uuid4())[:8]
             created_by = session['user_id']
             created_at = datetime.now()
@@ -1047,7 +924,7 @@ def brainstorm():
             return redirect(url_for('join_brainstorm_room', room_id=room_id))
 
         cur.execute('SELECT room_id, title, created_at FROM brainstorm_rooms ORDER BY created_at DESC')
-        rooms_data = [dict(r) for r in cur.fetchall()] # Convert DictRows to dicts
+        rooms_data = cur.fetchall()
     except psycopg2.Error as e:
         conn.rollback()
         flash(f"Database error on brainstorm page: {e}", "danger")
@@ -1066,42 +943,40 @@ def join_brainstorm_room(room_id):
         flash("Login required", "danger")
         return redirect(url_for('login'))
 
-    user_name = session.get("user") # Use 'user' for display name, 'user_id' for DB ops
-    user_role = session.get("role")
+    user = session.get("user") 
 
     conn = get_db_connection()
     if conn is None:
-        flash("Database connection failed. Please try again later.", "danger")
-        return render_template('brainstorm_room.html', room_id=room_id, user=user_name, shared_files=[], chat_history=[], admin_name="Database Error", role=user_role)
+        return render_template('brainstorm_room.html', room_id=room_id, user=user, shared_files=[], chat_history=[], admin_name="Database Error")
 
     cur = conn.cursor(cursor_factory=DictCursor)
     chat_history = []
-    shared_files_data = []
+    shared_files_data = [] # New list for persistent shared files
     creator_id = None
     admin_name = "Unknown"
 
     try:
         cur.execute("SELECT username, message, timestamp FROM brainstorm_chats WHERE room_id = %s ORDER BY timestamp ASC", (room_id,))
-        chat_history = [dict(c) for c in cur.fetchall()]
+        chat_history = cur.fetchall()
 
+        # Fetch shared files for this room from the database
         cur.execute("SELECT filename, file_url, uploaded_by_user, uploaded_at FROM brainstorm_room_files WHERE room_id = %s ORDER BY uploaded_at ASC", (room_id,))
-        shared_files_data = [dict(f) for f in cur.fetchall()]
+        shared_files_data = cur.fetchall()
 
         cur.execute("SELECT created_by FROM brainstorm_rooms WHERE room_id = %s", (room_id,))
         creator_result = cur.fetchone()
         creator_id = creator_result['created_by'] if creator_result else None
 
         if creator_id:
-            # Try to get creator name from users table (students)
             cur.execute("SELECT name FROM users WHERE user_id = %s", (creator_id,))
-            creator_name_row = cur.fetchone()
-            if creator_name_row:
-                admin_name = creator_name_row['name']
-            else: # Try to get creator name from mentors table
+            admin_result = cur.fetchone()
+            if admin_result:
+                admin_name = admin_result['name']
+            else:
                 cur.execute("SELECT name FROM mentors WHERE user_id = %s", (creator_id,))
-                creator_name_row = cur.fetchone()
-                if creator_name_row:
-                    admin_name = creator_name_row['name']
+                mentor_admin_result = cur.fetchone()
+                if mentor_admin_result:
+                    admin_name = mentor_admin_result['name']
 
     except psycopg2.Error as e:
         flash(f"Database error in brainstorm room: {e}", "danger")
@@ -1112,38 +987,93 @@ def join_brainstorm_room(room_id):
 
     return render_template('brainstorm_room.html',
                            room_id=room_id,
-                           user=user_name,
-                           shared_files=shared_files_data,
+                           user=user,
+                           shared_files=shared_files_data, # Pass persistent shared files
                            chat_history=chat_history,
                            admin_name=admin_name,
-                           role=user_role)
+                           role=session.get('role')) # Pass role for dynamic button logic in template
+
+
+@app.route('/student_dashboard')
+def student_dashboard():
+    """Renders the student dashboard with personal info, events, and results."""
+    if 'user' not in session or session.get('role') != 'student':
+        flash("Unauthorized access", "danger")
+        return redirect(url_for('login'))
+
+    conn = get_db_connection()
+    if conn is None:
+        return render_template('student_dashboard.html', student=None, events=[], results={})
+
+    cur = conn.cursor(cursor_factory=DictCursor)
+    student = None
+    events = []
+    grouped_results = {}
+
+    try:
+        cur.execute("SELECT user_id, name, college, roll_no, email, address, contact, role, year, branch, department FROM users WHERE user_id = %s", (session['user_id'],))
+        student = cur.fetchone()
+
+        # Get all events - select image_url
+        cur.execute("SELECT id, title, description, date, short_description, image_url FROM events ORDER BY date DESC")
+        events = cur.fetchall()
+
+        cur.execute('''
+            SELECT event_title, position, winner_name, winner_email
+            FROM event_results
+            ORDER BY event_title,
+                     CASE 
+                         WHEN position LIKE '1%' THEN 1
+                         WHEN position LIKE '2%' THEN 2
+                         WHEN position LIKE '3%' THEN 3
+                         ELSE 4
+                     END
+        ''')
+        raw_results = cur.fetchall()
+
+        for result_row in raw_results:
+            event_title = result_row['event_title']
+            position = result_row['position']
+            name = result_row['winner_name']
+            email = result_row['winner_email']
+            if event_title not in grouped_results:
+                grouped_results[event_title] = []
+            grouped_results[event_title].append((position, name, email))
+
+    except psycopg2.Error as e:
+        flash(f"Database error on student dashboard: {e}", "danger")
+        print(f"STUDENT DASHBOARD ERROR: {e}")
+    finally:
+        if cur: cur.close()
+        if conn: conn.close()
+
+    return render_template('student_dashboard.html', student=student, events=events, results=grouped_results, role=session.get('role'))
 
 
 @app.route('/brainstorm/upload/<room>', methods=['POST'])
 def upload_file_brainstorm(room):
     """Handles file uploads to brainstorm rooms. Persists metadata to PostgreSQL and file to Cloudinary."""
-    if 'user_id' not in session:
-        return jsonify(status='error', message="Unauthorized. Please log in to upload files."), 403
-
-    file = request.files.get('file') # Use .get() for safety
-    user_who_uploaded = session.get('user') # Get current user's display name from session
+    file = request.files['file']
+    user_who_uploaded = request.form.get('user')
     
     if not file or not user_who_uploaded:
-        return jsonify(status='error', message="No file or user provided for upload."), 400
+        return jsonify(status='error', message="No file or user provided for upload.")
 
-    if not allowed_file(file.filename, ALLOWED_SUBMISSION_EXTENSIONS):
-        return jsonify(status='error', message="Invalid file type. Only PDF, PPT, PPTX, DOC, DOCX allowed."), 400
+    if not allowed_file(file.filename, ALLOWED_SUBMISSION_EXTENSIONS): # Using submission extensions for brainstorm files
+        return jsonify(status='error', message="Invalid file type. Only PDF, PPT, PPTX, DOC, DOCX allowed for brainstorm files.")
 
     try:
+        # Upload to Cloudinary. resource_type='raw' for non-image files.
         upload_result = cloudinary.uploader.upload(file, resource_type="raw", folder=f"brainstorm_rooms/{room}") 
         file_url = upload_result['secure_url']
-        filename = secure_filename(file.filename) # Sanitize filename for display/storage
+        filename = file.filename # Use original filename for display
 
         conn = get_db_connection()
         if conn is None:
-            return jsonify(status='error', message="Database connection failed for file persistence."), 500
+            return jsonify(status='error', message="Database connection failed for file persistence.")
         cur = conn.cursor()
         try:
+            # Save file metadata to the new brainstorm_room_files table
             cur.execute('''
                 INSERT INTO brainstorm_room_files (room_id, filename, file_url, uploaded_by_user, uploaded_at)
                 VALUES (%s, %s, %s, %s, %s)
@@ -1152,25 +1082,16 @@ def upload_file_brainstorm(room):
         except psycopg2.Error as e:
             conn.rollback()
             print(f"DATABASE ERROR SAVING BRAINSTORM FILE METADATA: {e}")
-            return jsonify(status='error', message=f"Failed to save file metadata to DB: {e}"), 500
+            return jsonify(status='error', message=f"Failed to save file metadata to DB: {e}")
         finally:
             if cur: cur.close()
             if conn: conn.close()
 
-        # Emit to all users in the room that a file has been shared
-        # Ensure timestamp is ISO format for consistent parsing in JS
-        timestamp_iso = datetime.now().isoformat()
-        socketio.emit('file_shared', {
-            'user': user_who_uploaded,
-            'filename': filename,
-            'file_url': file_url,
-            'timestamp': timestamp_iso
-        }, to=room)
-
-        return jsonify(status='success', filename=filename, file_url=file_url, user=user_who_uploaded, timestamp=timestamp_iso), 200
+        # Return success with necessary data for client-side update
+        return jsonify(status='success', filename=filename, file_url=file_url, user=user_who_uploaded, timestamp=datetime.now().isoformat())
     except Exception as e:
         print(f"Cloudinary file upload error: {e}")
-        return jsonify(status='error', message=f"Failed to upload file: {e}"), 500
+        return jsonify(status='error', message=f"Failed to upload file to Cloudinary: {e}")
 
 
 @app.route('/brainstorm/files/<room>')
@@ -1178,34 +1099,59 @@ def get_shared_files(room):
     """Returns a JSON list of files shared in a brainstorm room (from DB)."""
     conn = get_db_connection()
     if conn is None:
-        return jsonify(status='error', message="Database connection failed to fetch files."), 500
+        return jsonify(status='error', message="Database connection failed to fetch files.")
     cur = conn.cursor(cursor_factory=DictCursor)
     files_data = []
     try:
+        # Fetch file metadata from the new brainstorm_room_files table
         cur.execute("SELECT filename, file_url, uploaded_by_user, uploaded_at FROM brainstorm_room_files WHERE room_id = %s ORDER BY uploaded_at ASC", (room,))
-        files_data = [dict(row) for row in cur.fetchall()] # Convert DictRows to plain dictionaries
+        files_data = cur.fetchall()
+        # Convert DictRows to plain dictionaries for jsonify if necessary (DictCursor often handles this)
+        files_data = [dict(row) for row in files_data]
     except psycopg2.Error as e:
         print(f"DATABASE ERROR FETCHING BRAINSTORM FILES: {e}")
-        return jsonify(status='error', message=f"Failed to fetch files from DB: {e}"), 500
+        return jsonify(status='error', message=f"Failed to fetch files from DB: {e}")
     finally:
         if cur: cur.close()
         if conn: conn.close()
     
-    return jsonify(files_data), 200
+    return jsonify(files_data)
 
-# This route is a bit redundant with the POST logic in /brainstorm, consider consolidating.
-# Kept for now to match original structure, but POST to /brainstorm handles room creation
+
 @app.route('/brainstorm/create', methods=['POST'])
-def create_room_legacy(): # Renamed to avoid confusion
-    """Handles creating a new brainstorm room (legacy route, use /brainstorm POST instead)."""
-    if 'user_id' not in session or session['role'] not in ['student', 'mentor']:
+def create_room():
+    """Handles creating a new brainstorm room."""
+    # This route is a bit redundant with the POST logic in /brainstorm, consider consolidating.
+    if 'user_id' not in session or session['role'] != 'student': # Only students create rooms
         flash("Unauthorized access to create room", "danger")
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('dashboard')) # Redirect to appropriate dashboard
 
-    # This route logic is mostly duplicated in /brainstorm (POST)
-    # Consider removing this route and ensuring all room creation goes through /brainstorm (POST)
-    flash("Please use the 'Create Room' form on the Brainstorming Ideas page.", "info")
-    return redirect(url_for('brainstorm'))
+    room_id = str(uuid.uuid4())[:8]
+    created_by = session['user_id']
+    created_at = datetime.now()
+
+    conn = get_db_connection()
+    if conn is None:
+        flash("Database connection failed. Room creation failed.", "danger")
+        return redirect(url_for('brainstorm'))
+
+    cur = conn.cursor()
+    try:
+        cur.execute('''
+            INSERT INTO brainstorm_rooms (room_id, title, created_by, created_at)
+            VALUES (%s, %s, %s, %s)
+        ''', (room_id, "New Brainstorm Room", created_by, created_at)) # Default title, user can rename
+        conn.commit()
+        flash(f"Room created! Share the invite link: /brainstorm/room/{room_id}", "success")
+        return redirect(url_for('join_brainstorm_room', room_id=room_id))
+    except psycopg2.Error as e:
+        conn.rollback()
+        flash(f"Database error creating room: {e}", "danger")
+        print(f"BRAINSTORM ROOM CREATE ERROR: {e}")
+    finally:
+        if cur: cur.close()
+        if conn: conn.close()
+    return redirect(url_for('brainstorm')) # Fallback redirect
 
 
 @socketio.on('join')
@@ -1215,7 +1161,6 @@ def handle_join(data):
     user = data.get('user', 'Anonymous')
     if room and user:
         join_room(room)
-        # Emit to all including sender, then specifically to new joiner (or just all)
         emit('message', {'user': 'System', 'msg': f"{user} joined the room.", 'timestamp': datetime.now().isoformat()}, to=room)
     else:
         print("Invalid data for join event:", data)
@@ -1227,8 +1172,7 @@ def handle_message(data):
     room = data.get('room')
     user = data.get('user')
     msg = data.get('msg')
-    # Timestamp is now sent from client-side JS, or default to server time
-    timestamp_str = data.get('timestamp') 
+    timestamp = data.get('timestamp')
 
     if not all([room, user, msg]):
         print("Invalid message data:", data)
@@ -1240,13 +1184,11 @@ def handle_message(data):
     
     cur = conn.cursor()
     try:
-        # Convert ISO format string to datetime object
-        db_timestamp = datetime.fromisoformat(timestamp_str) if timestamp_str else datetime.now()
+        db_timestamp = datetime.fromisoformat(timestamp) if timestamp else datetime.now()
         cur.execute("INSERT INTO brainstorm_chats (room_id, username, message, timestamp) VALUES (%s, %s, %s, %s)", 
                     (room, user, msg, db_timestamp))
         conn.commit()
-        # Emit back the same timestamp for consistency
-        emit('message', {'user': user, 'msg': msg, 'timestamp': timestamp_str}, to=room)
+        emit('message', {'user': user, 'msg': msg, 'timestamp': timestamp}, to=room)
     except psycopg2.Error as e:
         conn.rollback()
         print(f"CHAT MESSAGE SAVE ERROR: {e}")
@@ -1254,13 +1196,115 @@ def handle_message(data):
         if cur: cur.close()
         if conn: conn.close()
 
-@socketio.on('disconnect')
-def test_disconnect():
-    print("Client disconnected")
+@socketio.on('share_file')
+def handle_share_file(data):
+    """Handles real-time notification of a file being shared in a brainstorm room."""
+    room = data.get('room')
+    user = data.get('user')
+    filename = data.get('filename')
+    file_url = data.get('file_url')
+    timestamp = data.get('timestamp')
+
+    if not all([room, user, filename, file_url, timestamp]):
+        print("Invalid file share data:", data)
+        return
+    
+    emit('file_shared', {'user': user, 'filename': filename, 'file_url': file_url, 'timestamp': timestamp}, to=room)
 
 
-# Removed the now-redundant download_submission route, as files are served directly from Cloudinary URLs
+@app.route('/profile', methods=['GET', 'POST'])
+def profile():
+    """Displays and allows updating of student user profile."""
+    if 'user_id' not in session or session['role'] != 'student':
+        flash("Unauthorized access. Please log in as a student.", "danger")
+        return redirect(url_for('login'))
 
+    user_data = get_user_by_id(session['user_id'])
+    if not user_data:
+        flash("User data not found. Please log in again.", "danger")
+        session.clear()
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        contact = request.form.get('contact')
+        address = request.form.get('address')
+        year = request.form.get('year')
+        branch = request.form.get('branch')
+        department = request.form.get('department')
+
+        conn = get_db_connection()
+        if conn is None:
+            return render_template('profile.html', user_data=user_data)
+
+        cur = conn.cursor()
+        try:
+            cur.execute('''
+                UPDATE users
+                SET contact = %s, address = %s, year = %s, branch = %s, department = %s
+                WHERE user_id = %s
+            ''', (contact, address, year, branch, department, session['user_id']))
+            conn.commit()
+            flash("Profile updated successfully!", "success")
+            user_data = get_user_by_id(session['user_id'])
+        except psycopg2.Error as e:
+            conn.rollback()
+            flash(f"Database error during profile update: {e}", "danger")
+            print(f"PROFILE UPDATE ERROR: {e}")
+        finally:
+            if cur: cur.close()
+            if conn: conn.close()
+
+    return render_template('profile.html', user_data=user_data)
+
+@app.route('/change_password', methods=['POST'])
+def change_password():
+    """Allows student users to change their password."""
+    if 'user_id' not in session or session['role'] != 'student':
+        flash("Unauthorized access. Please log in as a student.", "danger")
+        return redirect(url_for('login'))
+
+    current_password = request.form.get('current_password')
+    new_password = request.form.get('new_password')
+    confirm_new_password = request.form.get('confirm_new_password')
+
+    user_data = get_user_by_id(session['user_id'])
+    if not user_data:
+        flash("User data not found. Please log in again.", "danger")
+        session.clear()
+        return redirect(url_for('login'))
+
+    if not check_password_hash(user_data['password'], current_password):
+        flash("Current password incorrect.", "danger")
+        return redirect(url_for('profile'))
+
+    if new_password != confirm_new_password:
+        flash("New passwords do not match.", "danger")
+        return redirect(url_for('profile'))
+
+    if len(new_password) < 6:
+        flash("New password must be at least 6 characters long.", "danger")
+        return redirect(url_for('profile'))
+
+    hashed_new_password = generate_password_hash(new_password)
+
+    conn = get_db_connection()
+    if conn is None:
+        return redirect(url_for('profile'))
+
+    cur = conn.cursor()
+    try:
+        cur.execute("UPDATE users SET password = %s WHERE user_id = %s", (hashed_new_password, session['user_id']))
+        conn.commit()
+        flash("Password changed successfully!", "success")
+    except psycopg2.Error as e:
+        conn.rollback()
+        flash(f"Database error during password change: {e}", "danger")
+        print(f"CHANGE PASSWORD ERROR: {e}")
+    finally:
+        if cur: cur.close()
+        if conn: conn.close()
+
+    return redirect(url_for('profile'))
 
 # ---------- Logout ----------
 @app.route('/logout')
@@ -1272,13 +1316,4 @@ def logout():
 
 # ---------- Run App ----------
 if __name__ == '__main__':
-    # Ensure environment variables are set before running
-    if not DATABASE_URL:
-        print("FATAL: DATABASE_URL environment variable is not set. Exiting.")
-        exit(1)
-    if not EMAIL_ADDRESS or not EMAIL_PASSWORD:
-        print("WARNING: EMAIL_USER or EMAIL_PASS environment variables are not set. Email functionality may not work.")
-    if not all([os.environ.get('CLOUD_NAME'), os.environ.get('API_KEY'), os.environ.get('API_SECRET')]):
-        print("WARNING: Cloudinary credentials not fully set. File uploads may not work.")
-
     socketio.run(app, debug=True)
