@@ -894,7 +894,6 @@ def view_progress(event_id):
 
 @app.route('/brainstorm', methods=['GET', 'POST'])
 def brainstorm():
-    """Handles creation and listing of brainstorm rooms."""
     if 'user_id' not in session or session['role'] not in ['student', 'mentor']:
         flash("Unauthorized access", "danger")
         return redirect(url_for('login'))
@@ -904,12 +903,16 @@ def brainstorm():
         flash("Database connection failed. Please contact support.", "danger")
         return render_template('brainstorm.html', rooms=[])
 
-    cur = conn.cursor(cursor_factory=DictCursor)
+    cur = conn.cursor(cursor_factory=DictCursor) # Keep DictCursor here
     rooms_data = []
 
     try:
         if request.method == 'POST':
             room_title = request.form['room_title']
+            if not room_title:
+                flash("Room title cannot be empty.", "danger")
+                return redirect(url_for('brainstorm'))
+
             room_id = str(uuid.uuid4())[:8]
             created_by = session['user_id']
             created_at = datetime.now()
@@ -923,8 +926,20 @@ def brainstorm():
             flash("Room created! Share the invite link.", "success")
             return redirect(url_for('join_brainstorm_room', room_id=room_id))
 
-        cur.execute('SELECT room_id, title, created_at FROM brainstorm_rooms ORDER BY created_at DESC')
-        rooms_data = cur.fetchall()
+        # --- IMPORTANT CHANGE HERE ---
+        # Fetching creator name using LEFT JOIN and COALESCE
+        cur.execute('''
+            SELECT 
+                br.room_id, 
+                br.title, 
+                br.created_at,
+                COALESCE(u.name, m.name, 'Unknown User') AS creator_name
+            FROM brainstorm_rooms br
+            LEFT JOIN users u ON br.created_by = u.user_id
+            LEFT JOIN mentors m ON br.created_by = m.user_id
+            ORDER BY br.created_at DESC
+        ''')
+        rooms_data = [dict(r) for r in cur.fetchall()] # Convert DictRows to dicts for template
     except psycopg2.Error as e:
         conn.rollback()
         flash(f"Database error on brainstorm page: {e}", "danger")
