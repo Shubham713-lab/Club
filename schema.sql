@@ -87,6 +87,16 @@ CREATE TABLE IF NOT EXISTS brainstorm_chats (
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS brainstorm_room_files (
+    id SERIAL PRIMARY KEY,
+    room_id VARCHAR(8) NOT NULL,
+    filename VARCHAR(255) NOT NULL,
+    file_url TEXT NOT NULL,
+    uploaded_by_user VARCHAR(255) NOT NULL,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (room_id) REFERENCES brainstorm_rooms(room_id) ON DELETE CASCADE
+);
+
 -- event_results table
 CREATE TABLE IF NOT EXISTS event_results (
     id SERIAL PRIMARY KEY,
