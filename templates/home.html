@@ -3,10 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Forge - Home</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome for icons -->
+    <title>Code Forge - Home</title> <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -85,10 +82,10 @@
         /* Hero Section Specific */
         .hero-image {
             width: 100%;
-            height: auto; /* Changed to auto to maintain aspect ratio */
-            max-height: 400px; /* Set a max height to control overall size */
-            object-fit: contain; /* Changed from cover to contain */
-            border-radius: 1.5rem; /* Rounded corners */
+            height: auto;
+            max-height: 400px;
+            object-fit: contain;
+            border-radius: 1.5rem;
         }
         @keyframes slideInRight {
             from { opacity: 0; transform: translateX(50px); }
@@ -96,17 +93,17 @@
         }
         .animate-slide-in-right {
             animation: slideInRight 0.8s ease-out forwards;
-            animation-delay: 0.5s; /* Delay to appear after text */
-            opacity: 0; /* Start hidden */
+            animation-delay: 0.5s;
+            opacity: 0;
         }
 
         /* New: Bouncing effect for hero image */
         @keyframes bounceEffect {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); } /* Adjust bounce height */
+            50% { transform: translateY(-10px); }
         }
         .animate-bounce-effect {
-            animation: bounceEffect 3s ease-in-out infinite; /* Subtle, continuous bounce */
+            animation: bounceEffect 3s ease-in-out infinite;
         }
 
         /* New: Background light effect */
@@ -115,16 +112,42 @@
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
+
+        /* Mobile menu specific styles */
+        .hamburger-icon span {
+            display: block;
+            width: 25px;
+            height: 3px;
+            background-color: #67E8F9;
+            margin: 5px auto;
+            transition: all 0.3s ease-in-out;
+        }
+        .hamburger-icon.open span:nth-child(1) {
+            transform: translateY(8px) rotate(45deg);
+        }
+        .hamburger-icon.open span:nth-child(2) {
+            opacity: 0;
+        }
+        .hamburger-icon.open span:nth-child(3) {
+            transform: translateY(-8px) rotate(-45deg);
+        }
+        .mobile-menu {
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+        }
+        .mobile-menu.open {
+            max-height: 300px; /* Adjust based on content */
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
-    <!-- Navigation Bar -->
     <nav class="bg-gray-900 p-4 shadow-lg sticky top-0 z-50">
             <div class="container mx-auto flex justify-between items-center">
-                <!-- Club Logo -->
                 <div class="flex items-center space-x-3">
                     <a href="#" class="text-[#67E8F9] text-2xl font-extrabold flex items-center">
-                        <!-- Simple SVG for a modern logo placeholder -->
                         <svg class="w-8 h-8 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                             xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -134,7 +157,6 @@
                     </a>
                 </div>
 
-                <!-- Desktop Navigation Links -->
                 <div class="hidden md:flex space-x-8 items-center">
                     <a href="{{ url_for('student_registered_events') }}"
                         class="text-gray-300 hover:text-[#67E8F9] transition duration-300 ease-in-out nav-link-hover">Registered
@@ -146,7 +168,6 @@
                         class="bg-[#EF4444] text-white px-5 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out logout-link-hover shadow-md hover:shadow-[#EF4444]/40">Login</a>
                 </div>
 
-                <!-- Mobile Menu Button (Hamburger) -->
                 <div class="md:hidden">
                     <button id="mobile-menu-button" class="hamburger-icon focus:outline-none">
                         <span></span>
@@ -156,7 +177,6 @@
                 </div>
             </div>
 
-            <!-- Mobile Navigation Links (Hidden by default) -->
             <div id="mobile-menu" class="mobile-menu md:hidden bg-gray-800 py-4 mt-4 rounded-b-lg">
                 <div class="flex flex-col items-center space-y-4">
                     <a href="{{ url_for('student_registered_events') }}"
@@ -172,7 +192,6 @@
         </nav>
 
     <div class="content-wrapper">
-        <!-- Hero Section -->
         <section class="py-16 px-4 sm:px-6 lg:px-8 bg-black text-white animate-fade-in">
             <div class="container mx-auto flex flex-col md:flex-row items-center justify-between gap-10">
                 <div class="md:w-1/2 text-center md:text-left">
@@ -189,7 +208,6 @@
                     </a>
                 </div>
                 <div class="md:w-1/2 flex justify-center md:justify-end">
-                    <!-- Hero image remains static for now, as it's a fixed asset. -->
                     <img
                         src="/static/robo.png"
                         alt="Code Forge Community"
@@ -200,7 +218,6 @@
             </div>
         </section>
 
-        <!-- Upcoming Events Section -->
         <section class="py-16 px-4 sm:px-6 lg:px-8 bg-black">
             <div class="container mx-auto">
                 <h2 class="text-5xl font-extrabold text-center mb-12 text-[#67E8F9] leading-tight animate-pulse-slow">
@@ -210,11 +227,11 @@
                     {% if events %}
                         {% for event in events %}
                         <div class="bg-gray-900 rounded-xl shadow-lg overflow-hidden border border-gray-800 transition-all duration-300 event-card-hover">
-                            {# Updated to use event[5] which is now event.image_url #}
-                            {% if event[5] %}
+                            {# Updated to use dot notation for event properties #}
+                            {% if event.image_url %}
                             <img
-                                src="{{ event[5] }}"
-                                alt="{{ event[1] }} Event Image"
+                                src="{{ event.image_url }}"
+                                alt="{{ event.title }} Event Image"
                                 class="w-full h-48 object-cover rounded-t-lg"
                                 onerror="this.onerror=null;this.src='https://placehold.co/600x400/1F2937/67E8F9?text=Image+Error';"
                             >
@@ -226,12 +243,12 @@
                             >
                             {% endif %}
                             <div class="p-6">
-                                <h3 class="text-3xl font-bold text-white mb-2">{{ event[1] }}</h3>
-                                <p class="text-[#EF4444] text-sm mb-4"><i class="fa-regular fa-calendar-days mr-2"></i>  {{ event[3] }}</p>
+                                <h3 class="text-3xl font-bold text-white mb-2">{{ event.title }}</h3>
+                                <p class="text-[#EF4444] text-sm mb-4"><i class="fa-regular fa-calendar-days mr-2"></i>  {{ event.date }}</p>
                                 <p id="short" class="text-gray-300 text-base leading-relaxed mb-6">
-                                    {{ event[4] }}
+                                    {{ event.short_description }}
                                 </p>
-                                <a href="{{ url_for('event_detail', event_id=event[0]) }}" class="block">
+                                <a href="{{ url_for('event_detail', event_id=event.id) }}" class="block">
                                     <button class="w-full bg-[#67E8F9] text-gray-900 font-bold py-3 rounded-lg hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:shadow-[#67E8F9]/40">
                                         Know More
                                     </button>
@@ -248,7 +265,6 @@
             </div>
         </section>
 
-        <!-- Brainstorming Banner Section -->
         <section class="py-16 px-4 sm:px-6 lg:px-8 bg-gray-900 text-white animate-fade-in">
             <div class="container mx-auto text-center">
                 <h2 class="text-5xl font-extrabold mb-6 text-[#67E8F9] leading-tight animate-pulse-slow">
@@ -290,13 +306,12 @@
                     <div class="bg-gray-800 p-6 rounded-xl shadow-md border border-gray-700 transition-all duration-300 room-card-hover">
                         <i class="fas fa-cloud text-[#EF4444] text-4xl mb-4"></i>
                         <h4 class="text-xl font-semibold text-white mb-2">Decentralized Apps</h4>
-                        <p class="text-400 text-sm">Dive into blockchain & DApp concepts.</p>
+                        <p class="text-gray-400 text-sm">Dive into blockchain & DApp concepts.</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Event Winners Section -->
         <section class="py-16 px-4 sm:px-6 lg:px-8 bg-black">
             <div class="container mx-auto">
                 <h3 class="text-5xl font-extrabold text-center mb-12 text-[#67E8F9] leading-tight animate-pulse-slow">
@@ -304,10 +319,10 @@
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                     {% if results %}
-                        {% for event, winners in results.items() %}
+                        {% for event_title, winners in results.items() %}
                         <div class="bg-gray-900 p-8 rounded-xl shadow-lg border border-gray-800 animate-fade-in">
                             <strong class="text-3xl font-bold text-white mb-4 block">
-                                {{ event }}
+                                {{ event_title }}
                             </strong>
                             <ul class="list-none space-y-3">
                                 {% for winner in winners %}
@@ -332,9 +347,8 @@
             </div>
         </section>
 
-        <!-- Donation Banner Section -->
         <section class="py-16 px-4 sm:px-6 lg:px-8 bg-gray-900 text-white animate-fade-in">
-            <div class="container mx-auto text-center">
+            <div class="container mx-auto">
                 <h2 class="text-5xl font-extrabold mb-6 text-[#67E8F9] leading-tight animate-pulse-slow">
                     Support Our Vision!
                 </h2>
@@ -366,7 +380,6 @@
             </div>
         </section>
 
-        <!-- About Us Section -->
         <section class="py-16 px-4 sm:px-6 lg:px-8 bg-black animate-fade-in">
             <div class="container mx-auto text-center max-w-4xl">
                 <h2 class="text-5xl font-extrabold mb-6 text-[#67E8F9] leading-tight animate-pulse-slow">
@@ -398,7 +411,6 @@
         </section>
     </div>
 
-    <!-- Footer Section -->
     <footer class="bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 text-gray-400 border-t border-gray-800">
         <div class="container mx-auto flex flex-col md:flex-row justify-between items-center text-center md:text-left space-y-8 md:space-y-0">
             <div class="flex flex-col items-center md:items-start">
@@ -407,10 +419,11 @@
             </div>
             <div class="flex flex-col items-center md:items-start space-y-2">
                 <h4 class="text-lg font-semibold text-white mb-2">Quick Links</h4>
-                <a href="#" class="hover:text-[#67E8F9] transition duration-200">Upcoming Events</a>
-                <a href="#" class="hover:text-[#67E8F9] transition duration-200">Brainstorming Ideas</a>
-                <a href="#" class="hover:text-[#67E8F9] transition duration-200">My Profile</a>
-                <a href="#" class="hover:text-[#67E8F9] transition duration-200">About Us</a>
+                <a href="{{ url_for('home') }}" class="hover:text-[#67E8F9] transition duration-200">Home</a>
+                <a href="{{ url_for('student_registered_events') }}" class="hover:text-[#67E8F9] transition duration-200">Registered Events</a>
+                <a href="{{ url_for('brainstorm') }}" class="hover:text-[#67E8F9] transition duration-200">Brainstorming Ideas</a>
+                <a href="{{ url_for('profile') }}" class="hover:text-[#67E8F9] transition duration-200">My Profile</a>
+                <a href="{{ url_for('about') }}" class="hover:text-[#67E8F9] transition duration-200">About Us</a>
             </div>
             <div class="flex flex-col items-center md:items-start">
                 <h4 class="text-lg font-semibold text-white mb-2">Connect With Us</h4>
@@ -441,13 +454,16 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // JavaScript for mobile menu toggle
-        const mobileMenuButton = document.getElementById('mobile-menu-button');
-        const mobileMenu = document.getElementById('mobile-menu');
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
 
-        mobileMenuButton.addEventListener('click', () => {
-            mobileMenu.classList.toggle('open');
-            mobileMenuButton.classList.toggle('open');
-        });
+            if (mobileMenuButton && mobileMenu) {
+                mobileMenuButton.addEventListener('click', () => {
+                    mobileMenu.classList.toggle('open');
+                    mobileMenuButton.classList.toggle('open');
+                });
+            }
+
             // Donation Button Logic
             const donateButton = document.getElementById('donateButton');
             const qrCodeContainer = document.getElementById('qrCodeContainer');
@@ -463,6 +479,23 @@
                     }
                 });
             }
+
+            // --- Smooth Scrolling for Footer Quick Links ---
+            document.querySelectorAll('footer a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 70, // Adjust for fixed navbar height
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
         });
     </script>
 </body>
