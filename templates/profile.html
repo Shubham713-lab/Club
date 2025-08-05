@@ -1,198 +1,244 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Profile - Code Forge</title>
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- AOS (Animate On Scroll) Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #000000; /* Black background */
-            margin: 0;
-            min-height: 100vh;
-            color: #E5E7EB; /* Light gray for general text */
-            display: flex;
-            flex-direction: column;
+            background-color: #050816; /* A richer, deep navy-blue */
+            color: #E5E7EB;
+            /* Subtle moving gradient background */
+            background-image: radial-gradient(at 27% 37%, hsla(215, 98%, 61%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 97% 21%, hsla(187, 98%, 61%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 52% 99%, hsla(355, 98%, 61%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 10% 29%, hsla(256, 96%, 63%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 97% 96%, hsla(38, 60%, 62%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 33% 50%, hsla(222, 67%, 73%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 79% 53%, hsla(343, 68%, 63%, 0.1) 0px, transparent 50%);
         }
-
-        /* Custom animations */
-        @keyframes pulse-slow {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-        .animate-pulse-slow {
-            animation: pulse-slow 3s infinite ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-            animation: fadeIn 0.6s ease-out forwards;
-        }
-
-        /* Button/Input Hover/Focus Effects */
-        .button-hover-animation:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(103, 232, 249, 0.4);
-        }
-        .input-focus-animation:focus {
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.5);
-            border-color: #67E8F9;
-        }
-
-        /* Specific style for email text to wrap */
-        .email-text-wrap {
-            word-wrap: break-word;
-            white-space: normal;
+        
+        /* Glassmorphism effect for cards */
+        .glass-card {
+            background: rgba(17, 25, 40, 0.75);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.125);
         }
 
         /* Flash message styling */
-        .flash-message {
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
-            font-weight: 500;
-            text-align: center;
-        }
         .flash-success {
-            background-color: #10B981; /* Tailwind green-500 */
-            color: #042F2E; /* Dark text for contrast */
+            @apply bg-green-500/10 text-green-400 border border-green-500/30;
         }
         .flash-danger {
-            background-color: #EF4444; /* Tailwind red-500 */
-            color: #450A0A; /* Dark text for contrast */
+            @apply bg-red-500/10 text-red-400 border border-red-500/30;
         }
         .flash-info {
-            background-color: #3B82F6; /* Tailwind blue-500 */
-            color: #072F6F; /* Dark text for contrast */
+            @apply bg-blue-500/10 text-blue-400 border border-blue-500/30;
         }
     </style>
 </head>
-<body>
-    <nav class="bg-gray-900 p-4 shadow-lg sticky top-0 z-50">
-        <div class="container mx-auto flex justify-between items-center">
-            <span id="logo" class="text-[#67E8F9] text-3xl font-extrabold tracking-wide">Code Forge</span>
-            <a href="{{ url_for('student_dashboard') }}">
-                <button class="bg-[#EF4444] text-white px-6 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-md hover:shadow-[#EF4444]/40">
-                    <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
-                </button>
-            </a>
+<body class="flex flex-col min-h-screen">
+
+    <!-- ========== HEADER ========== -->
+    <header class="flex flex-wrap md:justify-start md:flex-nowrap z-50 w-full text-sm py-4 bg-slate-900/60 backdrop-blur-md sticky top-0">
+      <nav class="max-w-[85rem] w-full mx-auto px-4 flex items-center justify-between" aria-label="Global">
+        <a class="flex-none flex items-center gap-2" href="{{ url_for('home') }}">
+          <img src="{{ url_for('static', filename='Logo.png') }}" alt="Code Forge Logo" class="h-10 w-auto">
+          <span class="text-2xl font-extrabold text-white">Code Forge</span>
+        </a>
+        <div class="md:hidden">
+          <button type="button" id="navbar-toggle" class="hs-collapse-toggle p-2 inline-flex justify-center items-center gap-2 rounded-lg border border-gray-700 font-medium bg-gray-800 text-gray-400 shadow-sm hover:bg-gray-700" data-hs-collapse="#navbar-collapse" aria-controls="navbar-collapse" aria-label="Toggle navigation">
+            <i class="fa-solid fa-bars hs-collapse-open:block"></i>
+            <i class="fa-solid fa-xmark hs-collapse-open:hidden"></i>
+          </button>
         </div>
-    </nav>
-
-    <div class="container mx-auto py-8 px-4 sm:px-6 lg:px-8 animate-fade-in">
-        <h2 class="text-4xl sm:text-5xl font-extrabold text-center mb-6 text-[#67E8F9] leading-tight animate-pulse-slow">
-            My Profile
-        </h2>
-
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="mb-6">
-                    {% for category, message in messages %}
-                        <div class="flash-message flash-{{ category }}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                </div>
+        <div id="navbar-collapse" class="hs-collapse hidden overflow-hidden transition-all duration-300 basis-full grow md:block md:w-auto md:basis-auto md:order-2">
+          <div class="flex flex-col gap-5 mt-5 md:flex-row md:items-center md:justify-end md:mt-0 md:pl-5">
+            <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('home') }}">Home</a>
+            {% if session['user'] %}
+                <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('student_registered_events') }}">Registered Events</a>
+                <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('brainstorm') }}">Brainstorm</a>
+                <a class="inline-block bg-red-500 text-white font-bold px-6 py-3 rounded-lg shadow-lg shadow-red-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-red-500/50 text-sm" href="{{ url_for('logout') }}">Logout</a>
+            {% else %}
+                <a class="inline-block bg-cyan-400 text-slate-900 font-bold px-6 py-3 rounded-lg shadow-lg shadow-cyan-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-cyan-500/50 text-sm" href="{{ url_for('login') }}">Login</a>
             {% endif %}
-        {% endwith %}
-
-        <div class="flex flex-col lg:flex-row lg:space-x-8">
-
-            <div class="bg-gray-900 p-6 rounded-xl shadow-2xl border border-gray-800 lg:w-2/3 mb-6 lg:mb-0">
-                <h3 class="text-2xl sm:text-3xl font-bold text-white mb-6 text-center">Update Information</h3>
-                <form method="POST" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                        <div>
-                            <label class="block text-gray-300 text-lg font-medium mb-2">User ID:</label>
-                            <p class="text-gray-400 text-xl font-mono p-3 bg-gray-800 rounded-lg border border-gray-700">{{ user_data.user_id }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-gray-300 text-lg font-medium mb-2">Name:</label>
-                            <p class="text-white text-xl p-3 bg-gray-800 rounded-lg border border-gray-700">{{ user_data.name }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-gray-300 text-lg font-medium mb-2">Email:</label>
-                            <p class="text-gray-400 text-xl p-3 bg-gray-800 rounded-lg border border-gray-700 email-text-wrap">{{ user_data.email }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-gray-300 text-lg font-medium mb-2">College:</label>
-                            <p class="text-gray-400 text-xl p-3 bg-gray-800 rounded-lg border border-gray-700">{{ user_data.college }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-gray-300 text-lg font-medium mb-2">Roll No:</label>
-                            <p class="text-gray-400 text-xl p-3 bg-gray-800 rounded-lg border border-gray-700">{{ user_data.roll_no }}</p>
-                        </div>
-                    </div>
-
-                    <hr class="border-gray-700 my-8">
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-                        <div>
-                            <label for="contact" class="block text-gray-300 text-lg font-medium mb-2">Contact:</label>
-                            <input type="text" id="contact" name="contact" value="{{ user_data.contact or '' }}"
-                                   class="w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:ring-2 focus:ring-[#67E8F9] focus:border-transparent transition duration-200 input-focus-animation">
-                        </div>
-                        <div>
-                            <label for="address" class="block text-gray-300 text-lg font-medium mb-2">Address:</label>
-                            <textarea id="address" name="address" rows="3"
-                                      class="w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:ring-2 focus:ring-[#67E8F9] focus:border-transparent transition duration-200 input-focus-animation">{{ user_data.address or '' }}</textarea>
-                        </div>
-                        <div>
-                            <label for="year" class="block text-gray-300 text-lg font-medium mb-2">Year:</label>
-                            <input type="text" id="year" name="year" value="{{ user_data.year or '' }}"
-                                   class="w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:ring-2 focus:ring-[#67E8F9] focus:border-transparent transition duration-200 input-focus-animation">
-                        </div>
-                        <div>
-                            <label for="branch" class="block text-gray-300 text-lg font-medium mb-2">Branch:</label>
-                            <input type="text" id="branch" name="branch" value="{{ user_data.branch or '' }}"
-                                   class="w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:ring-2 focus:ring-[#67E8F9] focus:border-transparent transition duration-200 input-focus-animation">
-                        </div>
-                        <div class="col-span-full">
-                            <label for="department" class="block text-gray-300 text-lg font-medium mb-2">Department:</label>
-                            <input type="text" id="department" name="department" value="{{ user_data.department or '' }}"
-                                   class="w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:ring-2 focus:ring-[#67E8F9] focus:border-transparent transition duration-200 input-focus-animation">
-                        </div>
-                    </div>
-
-                    <button type="submit"
-                            class="w-full bg-[#67E8F9] text-gray-900 font-bold py-3 rounded-lg hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:shadow-[#67E8F9]/40 mt-8">
-                        <i class="fas fa-save mr-2"></i> Save Changes
-                    </button>
-                </form>
+          </div>
+        </div>
+      </nav>
+    </header>
+    <!-- ========== END HEADER ========== -->
+    
+    <!-- Flex-grow container to push footer down -->
+    <main class="flex-grow">
+        <div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
+            <div class="max-w-2xl mx-auto text-center mb-10 lg:mb-14" data-aos="fade-up">
+                <h2 class="text-3xl font-bold md:text-4xl md:leading-tight text-white">My Profile</h2>
+                <p class="mt-1 text-gray-400">Manage your personal information and account security.</p>
             </div>
 
-            <div class="bg-gray-900 p-6 rounded-xl shadow-2xl border border-gray-800 lg:w-1/3">
-                <h3 class="text-2xl sm:text-3xl font-bold text-white mb-6 text-center">Change Password</h3>
-                <form method="POST" action="{{ url_for('change_password') }}" class="space-y-6">
-                    <div>
-                        <label for="current_password" class="block text-gray-300 text-lg font-medium mb-2">Current Password:</label>
-                        <input type="password" id="current_password" name="current_password" required
-                               class="w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:ring-2 focus:ring-[#67E8F9] focus:border-transparent transition duration-200 input-focus-animation">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="max-w-4xl mx-auto mb-8 space-y-4">
+                        {% for category, message in messages %}
+                            <div class="p-4 rounded-lg text-sm text-center flash-{{ category }}" role="alert">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
                     </div>
-                    <div>
-                        <label for="new_password" class="block text-gray-300 text-lg font-medium mb-2">New Password:</label>
-                        <input type="password" id="new_password" name="new_password" required
-                               class="w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:ring-2 focus:ring-[#67E8F9] focus:border-transparent transition duration-200 input-focus-animation">
-                    </div>
-                    <div>
-                        <label for="confirm_new_password" class="block text-gray-300 text-lg font-medium mb-2">Confirm New Password:</label>
-                        <input type="password" id="confirm_new_password" name="confirm_new_password" required
-                               class="w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:ring-2 focus:ring-[#67E8F9] focus:border-transparent transition duration-200 input-focus-animation">
-                    </div>
-                    <button type="submit"
-                            class="w-full bg-[#EF4444] text-white font-bold py-3 rounded-lg hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:shadow-[#EF4444]/40 mt-8">
-                        <i class="fas fa-key mr-2"></i> Change Password
-                    </button>
-                </form>
+                {% endif %}
+            {% endwith %}
+
+            <div class="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                <!-- Update Information Form -->
+                <div class="lg:col-span-2 glass-card rounded-2xl p-6 md:p-8" data-aos="fade-up">
+                    <h3 class="text-2xl font-bold text-white mb-6">Update Information</h3>
+                    <form method="POST" class="space-y-6">
+                        <!-- Read-only Info -->
+                        <fieldset class="grid sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-400">Name</label>
+                                <p class="mt-1 text-white font-semibold">{{ user_data.name }}</p>
+                            </div>
+                             <div>
+                                <label class="block text-sm font-medium text-gray-400">Email</label>
+                                <p class="mt-1 text-white font-semibold break-words">{{ user_data.email }}</p>
+                            </div>
+                             <div>
+                                <label class="block text-sm font-medium text-gray-400">User ID</label>
+                                <p class="mt-1 font-mono text-gray-300">{{ user_data.user_id }}</p>
+                            </div>
+                             <div>
+                                <label class="block text-sm font-medium text-gray-400">College</label>
+                                <p class="mt-1 text-gray-300">{{ user_data.college }}</p>
+                            </div>
+                        </fieldset>
+                        
+                        <hr class="border-gray-700">
+
+                        <!-- Editable Info -->
+                        <fieldset class="grid sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="contact" class="block text-sm font-medium text-gray-400 mb-2">Contact</label>
+                                <input type="text" id="contact" name="contact" value="{{ user_data.contact or '' }}" class="py-3 px-4 block w-full bg-slate-800 border-gray-700 rounded-lg text-sm text-white focus:border-cyan-500 focus:ring-cyan-500">
+                            </div>
+                            <div>
+                                <label for="year" class="block text-sm font-medium text-gray-400 mb-2">Year</label>
+                                <input type="text" id="year" name="year" value="{{ user_data.year or '' }}" class="py-3 px-4 block w-full bg-slate-800 border-gray-700 rounded-lg text-sm text-white focus:border-cyan-500 focus:ring-cyan-500">
+                            </div>
+                            <div>
+                                <label for="branch" class="block text-sm font-medium text-gray-400 mb-2">Branch</label>
+                                <input type="text" id="branch" name="branch" value="{{ user_data.branch or '' }}" class="py-3 px-4 block w-full bg-slate-800 border-gray-700 rounded-lg text-sm text-white focus:border-cyan-500 focus:ring-cyan-500">
+                            </div>
+                            <div>
+                                <label for="department" class="block text-sm font-medium text-gray-400 mb-2">Department</label>
+                                <input type="text" id="department" name="department" value="{{ user_data.department or '' }}" class="py-3 px-4 block w-full bg-slate-800 border-gray-700 rounded-lg text-sm text-white focus:border-cyan-500 focus:ring-cyan-500">
+                            </div>
+                             <div class="sm:col-span-2">
+                                <label for="address" class="block text-sm font-medium text-gray-400 mb-2">Address</label>
+                                <textarea id="address" name="address" rows="3" class="py-3 px-4 block w-full bg-slate-800 border-gray-700 rounded-lg text-sm text-white focus:border-cyan-500 focus:ring-cyan-500">{{ user_data.address or '' }}</textarea>
+                            </div>
+                        </fieldset>
+
+                        <button type="submit" class="w-full inline-block bg-cyan-400 text-slate-900 font-bold px-6 py-3 rounded-lg shadow-lg shadow-cyan-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-cyan-500/50">
+                            <i class="fas fa-save mr-2"></i> Save Changes
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Change Password Form -->
+                <div class="lg:col-span-1 glass-card rounded-2xl p-6 md:p-8" data-aos="fade-up" data-aos-delay="100">
+                    <h3 class="text-2xl font-bold text-white mb-6">Change Password</h3>
+                    <form method="POST" action="{{ url_for('change_password') }}" class="space-y-4">
+                        <div>
+                            <label for="current_password" class="block text-sm font-medium text-gray-400 mb-2">Current Password</label>
+                            <input type="password" id="current_password" name="current_password" required class="py-3 px-4 block w-full bg-slate-800 border-gray-700 rounded-lg text-sm text-white focus:border-red-500 focus:ring-red-500">
+                        </div>
+                        <div>
+                            <label for="new_password" class="block text-sm font-medium text-gray-400 mb-2">New Password</label>
+                            <input type="password" id="new_password" name="new_password" required class="py-3 px-4 block w-full bg-slate-800 border-gray-700 rounded-lg text-sm text-white focus:border-red-500 focus:ring-red-500">
+                        </div>
+                        <div>
+                            <label for="confirm_new_password" class="block text-sm font-medium text-gray-400 mb-2">Confirm New Password</label>
+                            <input type="password" id="confirm_new_password" name="confirm_new_password" required class="py-3 px-4 block w-full bg-slate-800 border-gray-700 rounded-lg text-sm text-white focus:border-red-500 focus:ring-red-500">
+                        </div>
+                        <button type="submit" class="w-full mt-4 inline-block bg-red-500 text-white font-bold px-6 py-3 rounded-lg shadow-lg shadow-red-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-red-500/50">
+                            <i class="fas fa-key mr-2"></i> Update Password
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
+    </main>
+
+    <!-- ========== FOOTER ========== -->
+    <footer class="bg-slate-900/80 mt-20">
+        <div class="max-w-[85rem] py-10 px-4 sm:px-6 lg:px-8 mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 items-center gap-6">
+                <div class="col-span-1 lg:col-span-2 flex flex-col items-center md:items-start">
+                    <a class="flex-none flex items-center gap-2" href="{{ url_for('home') }}">
+                      <img src="{{ url_for('static', filename='Logo.png') }}" alt="Code Forge Logo" class="h-10 w-auto">
+                      <span class="text-2xl font-extrabold text-white">Code Forge</span>
+                    </a>
+                    <p class="text-xs text-slate-400 sm:text-sm mt-3">© 2025 Code Forge. All rights reserved.</p>
+                </div>
+                
+                <div>
+                  <h4 class="text-lg font-semibold text-gray-200">Quick Links</h4>
+                  <div class="mt-3 grid space-y-3 text-sm">
+                    <p><a class="inline-flex gap-x-2 text-gray-400 hover:text-cyan-400" href="#">Events</a></p>
+                    <p><a class="inline-flex gap-x-2 text-gray-400 hover:text-cyan-400" href="#">About Us</a></p>
+                  </div>
+                </div>
+
+                <div>
+                    <h4 class="text-lg font-semibold text-gray-200">Connect</h4>
+                    <div class="mt-3 flex gap-x-4">
+                        <a class="w-10 h-10 inline-flex justify-center items-center gap-2 text-lg font-medium text-gray-400 rounded-full hover:bg-cyan-500 hover:text-white transition" href="#">
+                           <i class="fab fa-github"></i>
+                        </a>
+                         <a class="w-10 h-10 inline-flex justify-center items-center gap-2 text-lg font-medium text-gray-400 rounded-full hover:bg-blue-600 hover:text-white transition" href="#">
+                           <i class="fab fa-linkedin"></i>
+                        </a>
+                        <a class="w-10 h-10 inline-flex justify-center items-center gap-2 text-lg font-medium text-gray-400 rounded-full hover:bg-pink-600 hover:text-white transition" href="#">
+                           <i class="fab fa-instagram"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!-- ========== END FOOTER ========== -->
+    
+    <!-- Preline UI for Mobile Nav -->
+    <script src="https://cdn.jsdelivr.net/npm/preline@2.3.0/dist/preline.min.js"></script>
+    
+    <!-- AOS (Animate On Scroll) JS -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+      // Initialize AOS
+      AOS.init({
+        duration: 800,
+        once: true,
+      });
+    </script>
 </body>
 </html>

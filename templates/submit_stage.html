@@ -1,176 +1,188 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Submit for Stage: {{ stage[0] }}</title>
-    <!-- Tailwind CSS CDN -->
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- AOS (Animate On Scroll) Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #000000; /* Black background */
-            margin: 0;
-            min-height: 100vh;
-            color: #E5E7EB; /* Light gray for general text */
+            background-color: #050816; /* A richer, deep navy-blue */
+            color: #E5E7EB;
+            /* Subtle moving gradient background */
+            background-image: radial-gradient(at 27% 37%, hsla(215, 98%, 61%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 97% 21%, hsla(187, 98%, 61%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 52% 99%, hsla(355, 98%, 61%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 10% 29%, hsla(256, 96%, 63%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 97% 96%, hsla(38, 60%, 62%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 33% 50%, hsla(222, 67%, 73%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 79% 53%, hsla(343, 68%, 63%, 0.1) 0px, transparent 50%);
         }
-
-        /* Custom animation for button hover */
-        .button-hover-animation:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(103, 232, 249, 0.4);
-        }
-
-        /* Keyframe for pulse animation for heading */
-        @keyframes pulse-slow {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-
-        .animate-pulse-slow {
-            animation: pulse-slow 3s infinite ease-in-out;
-        }
-
-        /* Subtle fade-in for the submission form card */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .animate-fade-in {
-            animation: fadeIn 0.6s ease-out forwards;
-        }
-
-        /* Custom style for the file upload box */
-        .custom-file-upload {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            width: 180px; /* Square dimensions */
-            height: 180px; /* Square dimensions */
-            border: 3px dashed #67E8F9; /* Dashed border with accent color */
-            border-radius: 1rem; /* Rounded corners */
-            cursor: pointer;
-            transition: all 0.3s ease-in-out;
-            background-color: #1a1a1a; /* Slightly lighter black for contrast */
-            position: relative; /* For z-index effect */
-            z-index: 1; /* Default z-index */
-        }
-
-        .custom-file-upload:hover {
-            border-color: #4FD1C5; /* Darker cyan on hover */
-            background-color: #2a2a2a; /* Slightly darker background on hover */
-            transform: translateY(-8px) scale(1.05); /* Z-axis up effect */
-            box-shadow: 0 15px 30px rgba(103, 232, 249, 0.4); /* Stronger shadow on hover */
-            z-index: 2; /* Bring to front on hover */
-        }
-
-        .custom-file-upload i {
-            font-size: 3rem; /* Large plus icon */
-            color: #67E8F9; /* Accent color for the icon */
-            transition: color 0.3s ease-in-out;
-        }
-
-        .custom-file-upload:hover i {
-            color: #4FD1C5; /* Darker cyan on hover */
-        }
-
-        /* Hide the actual file input */
-        #submission_file {
-            display: none;
+        
+        /* Glassmorphism effect for cards */
+        .glass-card {
+            background: rgba(17, 25, 40, 0.75);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.125);
         }
     </style>
 </head>
-<body>
-    <!-- Navigation Bar -->
-    <nav class="bg-gray-900 p-4 shadow-lg sticky top-0 z-50">
-        <div class="container mx-auto flex justify-between items-center">
-            <!-- Club Logo/Title -->
-            <a href="#" id="logo" class="text-[#67E8F9] text-3xl font-extrabold tracking-wide">Code Forge</a>
-            <!-- Back to Dashboard Button -->
-            <a href="{{ url_for('student_dashboard') }}">
-                <button class="bg-[#EF4444] text-white px-6 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-md hover:shadow-[#EF4444]/40">
-                    ← Back to Dashboard
-                </button>
-            </a>
+<body class="flex flex-col min-h-screen">
+
+    <!-- ========== HEADER ========== -->
+    <header class="flex flex-wrap md:justify-start md:flex-nowrap z-50 w-full text-sm py-4 bg-slate-900/60 backdrop-blur-md sticky top-0">
+      <nav class="max-w-[85rem] w-full mx-auto px-4 flex items-center justify-between" aria-label="Global">
+        <a class="flex-none flex items-center gap-2" href="{{ url_for('home') }}">
+          <img src="{{ url_for('static', filename='Logo.png') }}" alt="Code Forge Logo" class="h-10 w-auto">
+          <span class="text-2xl font-extrabold text-white">Code Forge</span>
+        </a>
+        <div class="md:hidden">
+          <button type="button" id="navbar-toggle" class="hs-collapse-toggle p-2 inline-flex justify-center items-center gap-2 rounded-lg border border-gray-700 font-medium bg-gray-800 text-gray-400 shadow-sm hover:bg-gray-700" data-hs-collapse="#navbar-collapse" aria-controls="navbar-collapse" aria-label="Toggle navigation">
+            <i class="fa-solid fa-bars hs-collapse-open:block"></i>
+            <i class="fa-solid fa-xmark hs-collapse-open:hidden"></i>
+          </button>
         </div>
-    </nav>
+        <div id="navbar-collapse" class="hs-collapse hidden overflow-hidden transition-all duration-300 basis-full grow md:block md:w-auto md:basis-auto md:order-2">
+          <div class="flex flex-col gap-5 mt-5 md:flex-row md:items-center md:justify-end md:mt-0 md:pl-5">
+            <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('home') }}">Home</a>
+            {% if session['user'] %}
+                <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('student_registered_events') }}">Registered Events</a>
+                <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('brainstorm') }}">Brainstorm</a>
+                <a class="inline-block bg-red-500 text-white font-bold px-6 py-3 rounded-lg shadow-lg shadow-red-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-red-500/50 text-sm" href="{{ url_for('logout') }}">Logout</a>
+            {% else %}
+                <a class="inline-block bg-cyan-400 text-slate-900 font-bold px-6 py-3 rounded-lg shadow-lg shadow-cyan-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-cyan-500/50 text-sm" href="{{ url_for('login') }}">Login</a>
+            {% endif %}
+          </div>
+        </div>
+      </nav>
+    </header>
+    <!-- ========== END HEADER ========== -->
+    
+    <!-- Flex-grow container to push footer down -->
+    <main class="flex-grow">
+        <div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
+            <div class="max-w-2xl mx-auto text-center mb-10 lg:mb-14" data-aos="fade-up">
+                <h2 class="text-3xl font-bold md:text-4xl md:leading-tight text-white">Submit for Stage: <span class="text-cyan-400">{{ stage[0] }}</span></h2>
+                <p class="mt-1 text-gray-400">Deadline: {{ stage[1].strftime('%B %d, %Y') }}</p>
+            </div>
 
-    <!-- Submission Section -->
-    <section class="py-16 px-4 sm:px-6 lg:px-8 flex justify-center items-center">
-        <div id="submit" class="bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-800 max-w-2xl w-full animate-fade-in">
-            <h2 id="head" class="text-5xl font-extrabold text-center mb-8 text-[#67E8F9] leading-tight animate-pulse-slow">
-                Submit for Stage: <span class="text-white">{{ stage[0] }}</span>
-            </h2>
+            <div class="max-w-2xl mx-auto glass-card rounded-2xl p-6 md:p-8" data-aos="fade-up" data-aos-delay="100">
+                <form method="POST" enctype="multipart/form-data" class="space-y-6">
+                    <!-- Submission Text -->
+                    <div>
+                        <label for="submission_text" class="block text-sm font-medium text-gray-400 mb-2">Submission Text (Optional)</label>
+                        <textarea id="submission_text" name="submission_text" rows="5" class="py-3 px-4 block w-full bg-slate-800 border-gray-700 rounded-lg text-sm text-white focus:border-cyan-500 focus:ring-cyan-500" placeholder="Enter any relevant links or text here..."></textarea>
+                    </div>
 
-            <form method="POST" enctype="multipart/form-data" class="space-y-6">
+                    <!-- File Upload -->
+                    <div>
+                        <label for="submission_file" class="block text-sm font-medium text-gray-400 mb-2">Upload File</label>
+                        <label for="submission_file" class="relative flex items-center justify-center w-full h-48 border-2 border-dashed border-gray-600 rounded-lg cursor-pointer hover:border-cyan-500 transition-colors">
+                            <div class="text-center">
+                                <i class="fa-solid fa-cloud-arrow-up text-4xl text-gray-500"></i>
+                                <p class="mt-2 text-sm text-gray-400"><span class="font-semibold text-cyan-400">Click to upload</span> or drag and drop</p>
+                                <p class="text-xs text-gray-500">PDF, PPT, DOCX, etc.</p>
+                                <p id="file-name-display" class="mt-2 text-sm font-medium text-white"></p>
+                            </div>
+                            <input id="submission_file" name="submission_file" type="file" class="sr-only">
+                        </label>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="w-full inline-block bg-cyan-400 text-slate-900 font-bold px-6 py-3 rounded-lg shadow-lg shadow-cyan-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-cyan-500/50">
+                        <i class="fas fa-paper-plane mr-2"></i> Submit
+                    </button>
+                </form>
+                <p class="text-center text-gray-500 text-xs mt-6">
+                    <i class="fa-solid fa-circle-info mr-1"></i> Please note: You can only submit once for each stage.
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <!-- ========== FOOTER ========== -->
+    <footer class="bg-slate-900/80 mt-20">
+        <div class="max-w-[85rem] py-10 px-4 sm:px-6 lg:px-8 mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 items-center gap-6">
+                <div class="col-span-1 lg:col-span-2 flex flex-col items-center md:items-start">
+                    <a class="flex-none flex items-center gap-2" href="{{ url_for('home') }}">
+                      <img src="{{ url_for('static', filename='Logo.png') }}" alt="Code Forge Logo" class="h-10 w-auto">
+                      <span class="text-2xl font-extrabold text-white">Code Forge</span>
+                    </a>
+                    <p class="text-xs text-slate-400 sm:text-sm mt-3">© 2025 Code Forge. All rights reserved.</p>
+                </div>
+                
                 <div>
-                    <label for="submission_text" class="block text-gray-300 text-lg font-medium mb-2">Submission Text:</label>
-                    <textarea
-                        id="submission_text"
-                        name="submission_text"
-                        rows="6"
-                        class="w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:ring-2 focus:ring-[#67E8F9] focus:border-transparent transition duration-200"
-                        placeholder="Enter your submission text here..."
-                    ></textarea>
+                  <h4 class="text-lg font-semibold text-gray-200">Quick Links</h4>
+                  <div class="mt-3 grid space-y-3 text-sm">
+                    <p><a class="inline-flex gap-x-2 text-gray-400 hover:text-cyan-400" href="#">Events</a></p>
+                    <p><a class="inline-flex gap-x-2 text-gray-400 hover:text-cyan-400" href="#">About Us</a></p>
+                  </div>
                 </div>
 
                 <div>
-                    <label class="block text-gray-300 text-lg font-medium mb-4">Upload File (PDF/PPT/PPTX):</label>
-                    <div class="flex items-center space-x-4">
-                        <div class="custom-file-upload" id="custom-file-upload-area">
-                            <i class="fas fa-plus"></i>
-                            <span class="text-gray-400 text-sm mt-2">Click to Upload</span>
-                        </div>
-                        <input
-                            id="submission_file"
-                            type="file"
-                            name="submission_file"
-                            accept=".pdf,.ppt,.pptx"
-                            required
-                        >
-                        <span id="file-name-display" class="text-gray-400 text-md italic">No file chosen</span>
+                    <h4 class="text-lg font-semibold text-gray-200">Connect</h4>
+                    <div class="mt-3 flex gap-x-4">
+                        <a class="w-10 h-10 inline-flex justify-center items-center gap-2 text-lg font-medium text-gray-400 rounded-full hover:bg-cyan-500 hover:text-white transition" href="#">
+                           <i class="fab fa-github"></i>
+                        </a>
+                         <a class="w-10 h-10 inline-flex justify-center items-center gap-2 text-lg font-medium text-gray-400 rounded-full hover:bg-blue-600 hover:text-white transition" href="#">
+                           <i class="fab fa-linkedin"></i>
+                        </a>
+                        <a class="w-10 h-10 inline-flex justify-center items-center gap-2 text-lg font-medium text-gray-400 rounded-full hover:bg-pink-600 hover:text-white transition" href="#">
+                           <i class="fab fa-instagram"></i>
+                        </a>
                     </div>
                 </div>
-
-                <button
-                    type="submit"
-                    class="w-full bg-[#67E8F9] text-gray-900 font-bold py-3 rounded-lg hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:shadow-[#67E8F9]/40"
-                >
-                    Submit
-                </button>
-            </form>
-
-            <p id="active" class="text-center text-gray-500 text-sm mt-8">
-                <i class="fa-solid fa-circle-info mr-2"></i> Note : You can submit only one time.
-            </p>
+            </div>
         </div>
-    </section>
-
+    </footer>
+    <!-- ========== END FOOTER ========== -->
+    
+    <!-- Preline UI for Mobile Nav -->
+    <script src="https://cdn.jsdelivr.net/npm/preline@2.3.0/dist/preline.min.js"></script>
+    
+    <!-- AOS (Animate On Scroll) JS -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const customUploadArea = document.getElementById('custom-file-upload-area');
-            const fileInput = document.getElementById('submission_file');
-            const fileNameDisplay = document.getElementById('file-name-display');
+      // Initialize AOS
+      AOS.init({
+        duration: 800,
+        once: true,
+      });
 
-            // Trigger click on hidden file input when custom area is clicked
-            customUploadArea.addEventListener('click', () => {
-                fileInput.click();
-            });
+      // File upload display script
+      document.addEventListener('DOMContentLoaded', () => {
+        const fileInput = document.getElementById('submission_file');
+        const fileNameDisplay = document.getElementById('file-name-display');
 
-            // Update file name display when a file is selected
+        if (fileInput && fileNameDisplay) {
             fileInput.addEventListener('change', () => {
                 if (fileInput.files.length > 0) {
-                    fileNameDisplay.textContent = fileInput.files[0].name;
+                    fileNameDisplay.textContent = `Selected: ${fileInput.files[0].name}`;
                 } else {
-                    fileNameDisplay.textContent = 'No file chosen';
+                    fileNameDisplay.textContent = '';
                 }
             });
-        });
+        }
+      });
     </script>
 </body>
 </html>

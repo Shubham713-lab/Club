@@ -1,417 +1,310 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brainstorm Room</title>
+    <title>Brainstorm Room - {{ room_id }}</title>
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- AOS (Animate On Scroll) Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #000000; /* Black background */
-            margin: 0;
-            min-height: 100vh;
-            color: #E5E7EB; /* Light gray for general text */
-            display: flex;
-            flex-direction: column;
+            background-color: #050816; /* A richer, deep navy-blue */
+            color: #E5E7EB;
+            /* Subtle moving gradient background */
+            background-image: radial-gradient(at 27% 37%, hsla(215, 98%, 61%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 97% 21%, hsla(187, 98%, 61%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 52% 99%, hsla(355, 98%, 61%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 10% 29%, hsla(256, 96%, 63%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 97% 96%, hsla(38, 60%, 62%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 33% 50%, hsla(222, 67%, 73%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 79% 53%, hsla(343, 68%, 63%, 0.1) 0px, transparent 50%);
         }
-
-        /* Ensure main content takes available space */
-        .flex-grow-content {
-            flex-grow: 1;
-        }
-
-        /* Custom animation for button hover */
-        .button-hover-animation:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(103, 232, 249, 0.4);
-        }
-
-        /* Keyframe for pulse animation for heading */
-        @keyframes pulse-slow {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-
-        .animate-pulse-slow {
-            animation: pulse-slow 3s infinite ease-in-out;
-        }
-
-        /* Subtle fade-in for the main section card */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .animate-fade-in {
-            animation: fadeIn 0.6s ease-out forwards;
-        }
-
-        /* Custom animation for input focus */
-        .input-focus-animation:focus {
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.5); /* #67E8F9 with transparency */
-            border-color: #67E8F9;
-        }
-
-        /* Chat message styling */
-        .msg {
-            background-color: #1a1a1a; /* Darker background for messages */
-            padding: 0.75rem 1rem;
-            border-radius: 0.75rem;
-            margin-bottom: 0.5rem;
-            word-wrap: break-word; /* Ensure long words break */
-        }
-
-        .msg strong {
-            color: #67E8F9; /* Accent color for username */
-            margin-right: 0.5rem;
-        }
-
-        .msg a {
-            color: #67E8F9; /* Link color for shared files */
-            text-decoration: underline;
-        }
-
-        /* Shared files list styling */
-        #sharedFiles li {
-            background-color: #1a1a1a; /* Darker background for list items */
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 0.3rem;
-            display: flex;
-            align-items: center;
-        }
-
-        #sharedFiles li strong {
-            color: #EF4444; /* Red accent for user who shared */
-            margin-right: 0.5rem;
-        }
-
-        #sharedFiles li a {
-            color: #67E8F9; /* Link color for file download */
-            text-decoration: underline;
-        }
-
-        /* Hide the actual file input */
-        #fileInput {
-            display: none;
+        
+        /* Glassmorphism effect for cards */
+        .glass-card {
+            background: rgba(17, 25, 40, 0.75);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.125);
         }
 
         /* Custom scrollbar for chat and file list */
         .custom-scrollbar::-webkit-scrollbar {
-            width: 8px; /* Width for vertical scrollbar */
-            height: 8px; /* Height for horizontal scrollbar */
+            width: 8px;
         }
-
         .custom-scrollbar::-webkit-scrollbar-track {
-            background: #1F2937; /* Dark track background */
-            border-radius: 10px;
+            background: transparent;
         }
-
         .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #4B5563; /* Gray thumb */
+            background: #4B5563;
             border-radius: 10px;
-            border: 2px solid #1F2937; /* Padding around thumb */
         }
-
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #6B7280; /* Darker gray on hover */
+            background: #6B7280;
         }
     </style>
 </head>
-<body>
-    <nav class="bg-gray-900 p-4 shadow-lg sticky top-0 z-50">
-        <div class="container mx-auto flex justify-between items-center">
-            <a href="#" id="logo" class="text-[#67E8F9] text-3xl font-extrabold tracking-wide">Code Forge</a>
-            <div class="flex items-center space-x-6">
-                <span class="text-gray-300 text-lg font-semibold">
-                    Room: <span class="text-white">{{ room_id }}</span> | Admin: <span class="text-[#67E8F9]">{{ admin_name }}</span>
-                </span>
-                {# Dynamic Back Button based on Role #}
-                {% if session['role'] == 'student' %}
-                <a href="{{ url_for('brainstorm') }}">
-                    <button id="b1" class="bg-[#EF4444] text-white px-6 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-md hover:shadow-[#EF4444]/40">
-                        ← Back to Brainstorm List
-                    </button>
-                </a>
-                {% elif session['role'] == 'mentor' %}
-                <a href="{{ url_for('mentor_dashboard') }}">
-                    <button id="b1" class="bg-[#EF4444] text-white px-6 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-md hover:shadow-[#EF4444]/40">
-                        ← Back to Dashboard
-                    </button>
-                </a>
-                {% else %} {# Fallback for other roles or if role is not set #}
-                <a href="{{ url_for('dashboard') }}">
-                    <button id="b1" class="bg-[#EF4444] text-white px-6 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-md hover:shadow-[#EF4444]/40">
-                        ← Back to Dashboard
-                    </button>
-                </a>
-                {% endif %}
-            </div>
-        </div>
-    </nav>
-
-    <section class="flex-grow-content py-8 px-4 sm:px-6 lg:px-8 flex justify-center items-stretch">
-        <div class="idea bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-800 w-full flex flex-col md:flex-row gap-8 animate-fade-in">
-
-            <div id="chat-section" class="flex-1 md:w-2/3 flex flex-col bg-gray-800 p-6 rounded-lg border border-gray-700">
-                <h3 class="text-3xl font-bold text-white mb-6 text-center">
-                    <i class="fas fa-comments text-[#67E8F9] mr-3"></i> Chat
-                </h3>
-                <div id="chat" class="flex-grow overflow-y-auto pr-4 custom-scrollbar min-h-[250px]">
-                    {% for chat_message in chat_history %} {# Renamed loop var for clarity #}
-                    <div class="msg">
-                        <strong>{{ chat_message.username }}</strong>: {{ chat_message.message }}
-                        {% if chat_message.timestamp %}
-                        <span class="text-gray-500 text-xs ml-2">[{{ chat_message.timestamp.strftime('%H:%M') }}]</span>
-                        {% endif %}
+<body class="flex flex-col min-h-screen">
+    
+    <!-- Flex-grow container to push footer down -->
+    <main class="flex-grow flex flex-col">
+        <!-- Room Header -->
+        <div class="bg-slate-900/80">
+            <div class="max-w-[85rem] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-white">Brainstorm Room</h1>
+                        <p class="mt-1 text-sm text-gray-400">Room ID: <span class="font-mono">{{ room_id }}</span> | Admin: <span class="font-semibold text-cyan-400">{{ admin_name }}</span></p>
                     </div>
-                    {% endfor %}
-                </div>
-
-                {% if session['role'] != 'mentor' %} {# Only show input/upload for students and admins, not mentors #}
-                <div class="mt-6 pt-4 border-t border-gray-700"> <div class="flex items-center gap-4 mb-4">
-                        <input
-                            id="message"
-                            type="text"
-                            placeholder="Type your message"
-                            class="flex-grow px-4 py-3 rounded-lg bg-gray-700 text-white placeholder-gray-500 border border-gray-600 focus:ring-2 focus:ring-[#67E8F9] focus:border-transparent transition duration-200 input-focus-animation"
-                        >
-                        <button
-                            id="send-message-btn" {# Changed ID for clarity #}
-                            onclick="sendMessage()"
-                            class="bg-[#67E8F9] text-gray-900 px-6 py-2 rounded-lg font-bold hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:shadow-[#67E8F9]/40 flex-shrink-0"
-                        >
-                            <i class="fas fa-paper-plane"></i> Send
-                        </button>
-                    </div>
-
-                    <form id="uploadForm" enctype="multipart/form-data" class="flex items-center gap-4">
-                        <label for="fileInput" class="bg-gray-700 text-gray-300 px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-600 transition duration-200 flex items-center text-sm font-medium">
-                            <i class="fas fa-paperclip mr-2"></i> Attach File
-                        </label>
-                        <input type="file" id="fileInput" name="file" accept=".pdf,.ppt,.pptx" required>
-                        <span id="file-name-display" class="text-gray-400 text-sm italic flex-grow">No file chosen</span>
-                        <button
-                            id="upload-file-btn" {# Changed ID for clarity #}
-                            type="submit"
-                            class="bg-[#67E8F9] text-gray-900 px-6 py-2 rounded-lg font-bold hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:hover:shadow-[#67E8F9]/40 flex-shrink-0"
-                        >
-                            <i class="fas fa-upload"></i> Share
-                        </button>
-                    </form>
-                </div>
-                {% endif %}
-            </div>
-
-            <div id="file-list-section" class="flex-1 md:w-1/3 flex flex-col bg-gray-800 p-6 rounded-lg border border-gray-700">
-                <h3 class="text-3xl font-bold text-white mb-6 text-center">
-                    <i class="fas fa-share-alt text-[#EF4444] mr-3"></i> Shared Files
-                </h3>
-                <div class="flex-grow overflow-y-auto pr-4 custom-scrollbar min-h-[250px]">
-                    <ul id="sharedFiles" class="list-none space-y-2">
-                        {# Initial files are loaded via JS fetch, not Jinja loop here anymore #}
-                        {# This loop was previously present but data was not consistently available from `shared_files` in app.py #}
-                    </ul>
-                    <p id="no-files-message" class="text-gray-500 text-center mt-4 hidden">No files shared yet.</p>
+                    {% if session['role'] == 'student' %}
+                        <a href="{{ url_for('brainstorm') }}" class="inline-block bg-red-500 text-white font-bold px-5 py-2.5 rounded-lg shadow-lg shadow-red-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-red-500/50 text-sm">
+                            <i class="fa-solid fa-arrow-left mr-2"></i> Back to Rooms
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('dashboard') }}" class="inline-block bg-red-500 text-white font-bold px-5 py-2.5 rounded-lg shadow-lg shadow-red-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-red-500/50 text-sm">
+                            <i class="fa-solid fa-arrow-left mr-2"></i> Back to Dashboard
+                        </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
-    </section>
 
+        <!-- Chat and Files Section -->
+        <div class="flex-grow max-w-[85rem] w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
+            <div class="grid lg:grid-cols-3 gap-8 h-full">
+                <!-- Chat Panel -->
+                <div class="lg:col-span-2 glass-card rounded-2xl flex flex-col p-6" data-aos="fade-up">
+                    <h3 class="text-xl font-bold text-white mb-4 flex-shrink-0">
+                        <i class="fas fa-comments text-cyan-400 mr-2"></i> Live Chat
+                    </h3>
+                    <div id="chat" class="flex-grow overflow-y-auto pr-2 custom-scrollbar space-y-4 min-h-[400px]">
+                        <!-- Chat messages will be dynamically inserted here -->
+                        {% for chat_message in chat_history %}
+                        <div class="flex gap-x-2">
+                            <div class="grow">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-cyan-400">{{ chat_message.username }}</span>
+                                    <span class="text-xs text-gray-500">{{ chat_message.timestamp.strftime('%I:%M %p') }}</span>
+                                </div>
+                                <p class="text-sm text-gray-300">{{ chat_message.message }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if session['role'] != 'mentor' %}
+                    <div class="mt-4 pt-4 border-t border-gray-700 flex-shrink-0">
+                        <div class="flex items-center gap-2">
+                            <input id="message" type="text" class="py-3 px-4 block w-full bg-slate-800 border-gray-700 rounded-lg text-sm text-white focus:border-cyan-500 focus:ring-cyan-500" placeholder="Type your message...">
+                            <button id="send-message-btn" class="inline-flex flex-shrink-0 justify-center items-center h-[46px] w-[46px] rounded-lg border border-transparent bg-cyan-400 text-slate-900 font-bold shadow-lg shadow-cyan-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-cyan-500/50">
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Shared Files Panel -->
+                <div class="lg:col-span-1 glass-card rounded-2xl flex flex-col p-6" data-aos="fade-up" data-aos-delay="100">
+                    <h3 class="text-xl font-bold text-white mb-4 flex-shrink-0">
+                        <i class="fas fa-folder-open text-red-400 mr-2"></i> Shared Files
+                    </h3>
+                    <div id="sharedFilesContainer" class="flex-grow overflow-y-auto pr-2 custom-scrollbar min-h-[250px]">
+                        <ul id="sharedFiles" class="space-y-3">
+                            <!-- Shared files will be dynamically inserted here -->
+                        </ul>
+                        <p id="no-files-message" class="text-gray-500 text-center mt-4 hidden">No files shared yet.</p>
+                    </div>
+                    {% if session['role'] != 'mentor' %}
+                    <div class="mt-4 pt-4 border-t border-gray-700 flex-shrink-0">
+                        <form id="uploadForm" enctype="multipart/form-data">
+                            <label for="fileInput" class="w-full inline-flex items-center justify-center gap-x-2 text-sm font-semibold rounded-lg border border-dashed border-gray-600 text-gray-400 hover:border-cyan-500 hover:text-cyan-400 p-4 cursor-pointer">
+                                <i class="fa-solid fa-upload"></i>
+                                Attach & Share File
+                            </label>
+                            <input type="file" id="fileInput" name="file" class="sr-only">
+                            <p id="file-name-display" class="text-xs text-center text-gray-500 mt-2"></p>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Socket.IO and custom scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
     <script>
         const socket = io();
-        const room = "{{ room_id }}";
-        const user = "{{ user }}"; // Assuming 'user' is passed from Flask context
+        
+        // FIX: Get room ID from the URL path instead of Jinja variable
+        const pathParts = window.location.pathname.split('/');
+        const room = pathParts.pop() || pathParts.pop(); // Handles optional trailing slash
+        
+        const user = "{{ user }}";
 
         const chatMessagesDiv = document.getElementById("chat");
         const sharedFilesList = document.getElementById("sharedFiles");
         const noFilesMessage = document.getElementById("no-files-message");
 
-        // Function to scroll element to bottom
         function scrollToBottom(element) {
             element.scrollTop = element.scrollHeight;
         }
 
-        // --- Initial Data Loading (Files and Chat) ---
-        async function loadInitialData() {
-            // Fetch chat history from server (assuming /brainstorm/room/<room_id> already provides it)
-            // (Your Flask route already populates chat_history, so this might be redundant if the Jinja loop works)
-            // If the Jinja loop is removed, this fetch would be needed:
-            /*
+        async function loadInitialFiles() {
             try {
-                const chatResponse = await fetch(`/brainstorm/chat/${room}`); // You'd need a new route for this
-                const chatData = await chatResponse.json();
-                chatData.forEach(item => {
-                    addChatMessage(item.username, item.message, item.timestamp);
-                });
-            } catch (error) {
-                console.error('Error fetching chat history:', error);
-            }
-            */
-
-            // Fetch shared files from server
-            try {
-                const filesResponse = await fetch(`/brainstorm/files/${room}`);
-                const files = await filesResponse.json();
+                const response = await fetch(`/brainstorm/files/${room}`);
+                const files = await response.json();
+                sharedFilesList.innerHTML = ''; // Clear list before loading
                 if (files.length > 0) {
                     noFilesMessage.classList.add('hidden');
-                    files.forEach(file => {
-                        // Add to shared files section (assuming file contains user, filename, file_url)
-                        addSharedFileToList(file.user, file.filename, file.file_url);
-                        // Also add to chat for historical context if desired (your original code did this)
-                        addChatMessage(file.user, `📎 <a href="${file.file_url}" target="_blank">${file.filename}</a>`, file.timestamp);
-                    });
+                    files.forEach(file => addSharedFileToList(file.uploaded_by_user, file.filename, file.file_url, file.uploaded_at));
                 } else {
                     noFilesMessage.classList.remove('hidden');
                 }
             } catch (error) {
                 console.error('Error fetching shared files:', error);
-                noFilesMessage.classList.remove('hidden'); // Show message on error too
+                noFilesMessage.classList.remove('hidden');
             }
-            scrollToBottom(chatMessagesDiv);
         }
 
-        // Helper to add chat message to the UI
-        function addChatMessage(username, message, timestamp = null) {
+        function addChatMessage(username, message, timestamp) {
             const div = document.createElement("div");
-            div.classList.add("msg");
-            let timeStr = '';
-            if (timestamp) {
-                // Parse timestamp if it's a string, assuming ISO format from backend
-                const date = new Date(timestamp);
-                timeStr = `<span class="text-gray-500 text-xs ml-2">(${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})</span>`;
-            }
-            div.innerHTML = `<strong>${username}</strong>: ${message} ${timeStr}`;
+            div.classList.add("flex", "gap-x-2");
+            const time = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            div.innerHTML = `
+                <div class="grow">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-cyan-400">${username}</span>
+                        <span class="text-xs text-gray-500">${time}</span>
+                    </div>
+                    <p class="text-sm text-gray-300">${message}</p>
+                </div>`;
             chatMessagesDiv.appendChild(div);
             scrollToBottom(chatMessagesDiv);
         }
 
-        // Helper to add shared file to the file list UI
-        function addSharedFileToList(username, filename, fileUrl) {
+        function addSharedFileToList(username, filename, fileUrl, timestamp) {
             const li = document.createElement("li");
-            li.innerHTML = `<strong>${username}</strong> shared: <a href="${fileUrl}" target="_blank" class="hover:underline">${filename}</a>`;
+            const time = new Date(timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' });
+            li.innerHTML = `
+                <a href="${fileUrl}" target="_blank" class="flex items-center gap-x-3 p-3 rounded-lg bg-slate-900/50 hover:bg-slate-800 transition-colors">
+                    <i class="fa-solid fa-file-lines text-xl text-red-400"></i>
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold text-white truncate">${filename}</p>
+                        <p class="text-xs text-gray-400">by ${username} on ${time}</p>
+                    </div>
+                    <i class="fa-solid fa-download text-gray-500"></i>
+                </a>`;
             sharedFilesList.appendChild(li);
         }
 
-        // Join room on connect
         socket.on("connect", () => {
-            console.log("Socket connected, joining room:", room);
             socket.emit("join", { room: room, user: user });
         });
 
-        // Display incoming text message
-        socket.on("message", function (data) {
-            console.log("Received message:", data);
-            addChatMessage(data.user, data.msg); // No timestamp from socket message currently
+        socket.on("message", (data) => {
+            addChatMessage(data.user, data.msg, data.timestamp);
         });
 
-        // Display incoming shared file in chat and file list
-        socket.on("file_shared", function (data) {
-            console.log("Received file_shared:", data);
-            addChatMessage(data.user, `📎 <a href="${data.file_url}" target="_blank">${data.filename}</a>`);
-            addSharedFileToList(data.user, data.filename, data.file_url);
-            // After a new file is shared, if the "No files shared yet." message is visible, hide it.
+        socket.on("file_shared", (data) => {
+            addChatMessage(data.user, `📎 Shared a file: <a href="${data.file_url}" target="_blank" class="text-cyan-400 underline">${data.filename}</a>`, data.timestamp);
+            addSharedFileToList(data.user, data.filename, data.file_url, data.timestamp);
             noFilesMessage.classList.add('hidden');
         });
 
-        // Send text message
         const messageInput = document.getElementById("message");
         const sendMessageBtn = document.getElementById("send-message-btn");
-
-        sendMessageBtn.addEventListener('click', sendMessage);
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
 
         function sendMessage() {
             const msg = messageInput.value.trim();
             if (msg) {
-                socket.emit("send_message", { room: room, user: user, msg: msg });
+                socket.emit("send_message", { room: room, user: user, msg: msg, timestamp: new Date().toISOString() });
                 messageInput.value = "";
             }
         }
+        
+        if (sendMessageBtn && messageInput) {
+            sendMessageBtn.addEventListener('click', sendMessage);
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendMessage();
+            });
+        }
 
-        // File Upload
         const uploadForm = document.getElementById('uploadForm');
         const fileInput = document.getElementById('fileInput');
         const fileNameDisplay = document.getElementById('file-name-display');
-        const uploadFileBtn = document.getElementById('upload-file-btn'); // New ID
 
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files.length > 0) {
-                fileNameDisplay.textContent = fileInput.files[0].name;
-            } else {
-                fileNameDisplay.textContent = 'No file chosen';
-            }
-        });
-
-        uploadForm.addEventListener('submit', async function (e) {
-            e.preventDefault();
-
-            const file = fileInput.files[0];
-            if (!file) {
-                showCustomMessageBox("Please select a file to share.");
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('user', user); // IMPORTANT: Send the user who is sharing the file
-
-            uploadFileBtn.disabled = true;
-            uploadFileBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...'; // Spinner icon
-
-            try {
-                const response = await fetch(`/brainstorm/upload/${room}`, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-                if (data.status === 'success') {
-                    // File data now includes the user and should be emitted
-                    socket.emit('share_file', {
-                        room: room,
-                        user: user, // Ensure user is passed here
-                        filename: data.filename,
-                        file_url: data.file_url
-                    });
+        if (uploadForm && fileInput) {
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length > 0) {
+                    fileNameDisplay.textContent = `Selected: ${fileInput.files[0].name}`;
+                    uploadFile(); // Automatically upload on file selection
                 } else {
-                    showCustomMessageBox("Upload failed: " + (data.message || "Unknown error"));
+                    fileNameDisplay.textContent = '';
                 }
-            } catch (error) {
-                console.error("Upload error:", error);
-                showCustomMessageBox("An error occurred during upload.");
-            } finally {
-                uploadFileBtn.disabled = false;
-                uploadFileBtn.innerHTML = '<i class="fas fa-upload"></i> Share';
-                fileInput.value = '';
-                fileNameDisplay.textContent = 'No file chosen';
-            }
-        });
+            });
 
-        // Custom Message Box Function (instead of alert)
-        function showCustomMessageBox(message) {
-            const messageBox = document.createElement('div');
-            messageBox.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
-            messageBox.innerHTML = `
-                <div class="bg-gray-800 p-8 rounded-lg shadow-xl max-w-sm w-full text-center border border-gray-700">
-                    <p class="text-white text-lg mb-4">${message}</p>
-                    <button class="bg-[#67E8F9] text-gray-900 px-6 py-2 rounded-lg font-bold hover:bg-opacity-90 transition" onclick="this.parentNode.parentNode.remove()">Close</button>
-                </div>
-            `;
-            document.body.appendChild(messageBox);
+            async function uploadFile() {
+                const file = fileInput.files[0];
+                if (!file) return;
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('user', user);
+
+                fileNameDisplay.textContent = 'Uploading...';
+
+                try {
+                    const response = await fetch(`/brainstorm/upload/${room}`, { method: 'POST', body: formData });
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        socket.emit('share_file', {
+                            room: room,
+                            user: data.user,
+                            filename: data.filename,
+                            file_url: data.file_url,
+                            timestamp: data.timestamp
+                        });
+                    } else {
+                        alert("Upload failed: " + (data.message || "Unknown error"));
+                    }
+                } catch (error) {
+                    console.error("Upload error:", error);
+                    alert("An error occurred during upload.");
+                } finally {
+                    fileInput.value = '';
+                    fileNameDisplay.textContent = '';
+                }
+            }
         }
-        
-        // Call loadInitialData when the DOM is fully loaded
-        document.addEventListener('DOMContentLoaded', loadInitialData);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadInitialFiles();
+            scrollToBottom(chatMessagesDiv);
+        });
+    </script>
+    
+    <!-- AOS (Animate On Scroll) JS -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+      AOS.init({
+        duration: 800,
+        once: true,
+      });
     </script>
 </body>
 </html>

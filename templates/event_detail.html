@@ -1,144 +1,184 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Event Details</title>
-    <!-- Tailwind CSS CDN -->
+    <title>Event Details - {{ event.title }}</title>
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- AOS (Animate On Scroll) Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #000000; /* Black background */
-            margin: 0;
-            min-height: 100vh;
-            color: #E5E7EB; /* Light gray for general text */
+            background-color: #050816; /* A richer, deep navy-blue */
+            color: #E5E7EB;
+            /* Subtle moving gradient background */
+            background-image: radial-gradient(at 27% 37%, hsla(215, 98%, 61%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 97% 21%, hsla(187, 98%, 61%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 52% 99%, hsla(355, 98%, 61%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 10% 29%, hsla(256, 96%, 63%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 97% 96%, hsla(38, 60%, 62%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 33% 50%, hsla(222, 67%, 73%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 79% 53%, hsla(343, 68%, 63%, 0.1) 0px, transparent 50%);
         }
-
-        /* Custom animation for button hover */
-        .button-hover-animation:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(103, 232, 249, 0.4);
+        
+        /* Glassmorphism effect for cards */
+        .glass-card {
+            background: rgba(17, 25, 40, 0.75);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.125);
         }
-
-        /* Keyframe for pulse animation for heading */
-        @keyframes pulse-slow {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-
-        .animate-pulse-slow {
-            animation: pulse-slow 3s infinite ease-in-out;
-        }
-
-        /* Subtle fade-in for the event detail card */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .animate-fade-in {
-            animation: fadeIn 0.6s ease-out forwards;
-        }
-
+        
         /* Preserve pre-formatted text styling */
         pre {
-            white-space: pre-wrap; /* Ensures text wraps within the container */
-            word-wrap: break-word; /* Breaks long words */
-            font-family: 'Inter', sans-serif; /* Use Inter for pre too */
-        }
-
-        /* Ensure images fill their container nicely */
-        .event-detail-image {
-            width: 100%;
-            height: auto; /* Allow height to adjust based on aspect ratio */
-            max-height: 350px; /* Still cap max height if needed */
-            object-fit: contain; /* Ensure entire image is visible */
-            background-color: #1a1a1a; /* A dark gray to fill empty space if image is smaller */
-            border-radius: 0.5rem; /* Match rounded-lg */
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Inter', sans-serif;
         }
     </style>
 </head>
-<body>
-    <!-- Navigation Bar -->
-    <nav class="bg-gray-900 p-4 shadow-lg sticky top-0 z-50">
-        <div class="container mx-auto flex justify-between items-center">
-            <!-- Club Logo/Title -->
-            <a href="#" id="logo" class="text-[#67E8F9] text-3xl font-extrabold tracking-wide">Code Forge</a>
-            <!-- Back to Dashboard Button -->
-            <a href="{{ url_for('student_dashboard') }}">
-                <button class="bg-[#EF4444] text-white px-6 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-md hover:shadow-[#EF4444]/40">
-                    Back to Dashboard
-                </button>
-            </a>
+<body class="flex flex-col min-h-screen">
+
+    <!-- ========== HEADER ========== -->
+    <header class="flex flex-wrap md:justify-start md:flex-nowrap z-50 w-full text-sm py-4 bg-slate-900/60 backdrop-blur-md sticky top-0">
+      <nav class="max-w-[85rem] w-full mx-auto px-4 flex items-center justify-between" aria-label="Global">
+        <a class="flex-none flex items-center gap-2" href="{{ url_for('home') }}">
+          <img src="{{ url_for('static', filename='Logo.png') }}" alt="Code Forge Logo" class="h-10 w-auto">
+          <span class="text-2xl font-extrabold text-white">Code Forge</span>
+        </a>
+        <div class="md:hidden">
+          <button type="button" id="navbar-toggle" class="hs-collapse-toggle p-2 inline-flex justify-center items-center gap-2 rounded-lg border border-gray-700 font-medium bg-gray-800 text-gray-400 shadow-sm hover:bg-gray-700" data-hs-collapse="#navbar-collapse" aria-controls="navbar-collapse" aria-label="Toggle navigation">
+            <i class="fa-solid fa-bars hs-collapse-open:block"></i>
+            <i class="fa-solid fa-xmark hs-collapse-open:hidden"></i>
+          </button>
         </div>
-    </nav>
-
-    <!-- Event Detail Section -->
-    <section class="py-16 px-4 sm:px-6 lg:px-8">
-        <div class="container mx-auto">
-            <div class="bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-800 animate-fade-in">
-                <h2 id="head" class="text-5xl font-extrabold text-center mb-8 text-[#67E8F9] leading-tight animate-pulse-slow">
-                    Event : {{ event[1] }}
-                </h2>
-
-                <!-- Image and Details Container -->
-                <div class="flex flex-col md:flex-row items-start gap-8 mb-6">
-                    <!-- Image on Left -->
-                    <div class="md:w-1/2 flex-shrink-0">
-                        {% if event[5] %} {# Assuming image_path is at index 5 #}
-                        <img
-                            src="{{ url_for('static', filename=event[5]) }}"
-                            alt="{{ event[1] }} Event Image"
-                            class="event-detail-image rounded-lg"
-                            onerror="this.onerror=null;this.src='https://placehold.co/800x350/1F2937/67E8F9?text=Event+Image+Error';"
-                        >
-                        {% else %}
-                        <img
-                            src="https://placehold.co/600x400/1F2937/67E8F9?text=No+Image+Available"
-                            alt="No Image Available"
-                            class="event-detail-image rounded-lg"
-                        >
-                        {% endif %}
-                    </div>
-
-                    <!-- Description and Deadline on Right -->
-                    <div class="md:w-1/2 flex-grow space-y-6">
-                        <p id="long" class="text-gray-300 text-lg">
-                            <strong class="text-white">Description:</strong>
-                            <pre class="mt-2 p-4 bg-gray-800 rounded-md border border-gray-700 text-gray-400 text-base overflow-auto leading-relaxed">{{ event[2] }}</pre>
-                        </p>
-
-                        <p class="text-gray-300 text-lg flex items-center">
-                            <i class="fa-regular fa-calendar-days text-[#EF4444] mr-3 text-xl"></i>
-                            <strong class="text-white">Deadline :</strong> <span class="ml-2 text-[#EF4444]">{{ event[3] }}</span>
-                        </p>
-                    </div>
+        <div id="navbar-collapse" class="hs-collapse hidden overflow-hidden transition-all duration-300 basis-full grow md:block md:w-auto md:basis-auto md:order-2">
+          <div class="flex flex-col gap-5 mt-5 md:flex-row md:items-center md:justify-end md:mt-0 md:pl-5">
+            <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('home') }}">Home</a>
+            {% if session['user'] %}
+                <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('student_registered_events') }}">Registered Events</a>
+                <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('brainstorm') }}">Brainstorm</a>
+                <a class="inline-block bg-red-500 text-white font-bold px-6 py-3 rounded-lg shadow-lg shadow-red-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-red-500/50 text-sm" href="{{ url_for('logout') }}">Logout</a>
+            {% else %}
+                <a class="inline-block bg-cyan-400 text-slate-900 font-bold px-6 py-3 rounded-lg shadow-lg shadow-cyan-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-cyan-500/50 text-sm" href="{{ url_for('login') }}">Login</a>
+            {% endif %}
+          </div>
+        </div>
+      </nav>
+    </header>
+    <!-- ========== END HEADER ========== -->
+    
+    <!-- Flex-grow container to push footer down -->
+    <main class="flex-grow">
+        <div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
+            <div class="glass-card rounded-2xl p-6 md:p-8" data-aos="fade-up">
+                <!-- Event Header -->
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold md:text-4xl md:leading-tight text-white">{{ event.title }}</h2>
+                    <p class="mt-2 text-lg text-red-400 font-semibold">{{ event.date.strftime('%B %d, %Y') }}</p>
                 </div>
 
-                <div class="mt-8 text-center">
-                    {% if registered %}
-                    <p class="text-green-400 text-xl font-semibold mb-6 animate-fade-in">
-                        <i class="fa-solid fa-circle-check mr-2"></i> You are already registered for this event.
-                    </p>
-                    <a href="{{ url_for('student_registered_events') }}">
-                        <button class="bg-[#67E8F9] text-gray-900 px-8 py-3 rounded-lg font-bold hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:shadow-[#67E8F9]/40">
-                            Go to Registered Events
-                        </button>
-                    </a>
-                    {% else %}
-                    <form method="post">
-                        <button type="submit" class="bg-[#67E8F9] text-gray-900 px-8 py-3 rounded-lg font-bold hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:shadow-[#67E8F9]/40">
-                            Register for Event
-                        </button>
-                    </form>
-                    {% endif %}
+                <!-- Event Content -->
+                <div class="grid lg:grid-cols-5 gap-8">
+                    <!-- Image -->
+                    <div class="lg:col-span-2">
+                        <img class="rounded-xl w-full h-full object-cover" src="{{ event.image_url or 'https://placehold.co/800x600/050816/FFFFFF?text=Event' }}" alt="{{ event.title }}">
+                    </div>
+
+                    <!-- Description and Registration -->
+                    <div class="lg:col-span-3 flex flex-col">
+                        <div>
+                            <h3 class="text-xl font-bold text-white">Event Description</h3>
+                            <pre class="mt-3 text-gray-400 text-base leading-relaxed">{{ event.description }}</pre>
+                        </div>
+                        
+                        <div class="mt-auto pt-8">
+                            {% if registered %}
+                                <div class="text-center bg-green-500/10 border border-green-500/30 text-green-400 text-lg font-semibold p-6 rounded-xl">
+                                    <i class="fa-solid fa-circle-check fa-2x mb-3"></i>
+                                    <p>You are already registered for this event.</p>
+                                    <a href="{{ url_for('student_registered_events') }}" class="mt-4 inline-block bg-cyan-400 text-slate-900 font-bold px-6 py-3 rounded-lg shadow-lg shadow-cyan-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-cyan-500/50 text-sm">
+                                        View My Registrations
+                                    </a>
+                                </div>
+                            {% else %}
+                                <form method="post" class="text-center">
+                                    <button type="submit" class="w-full md:w-auto inline-block bg-cyan-400 text-slate-900 font-bold px-8 py-4 rounded-lg shadow-lg shadow-cyan-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-cyan-500/50 text-lg">
+                                        <i class="fa-solid fa-rocket mr-2"></i> Register for this Event
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </section>
+    </main>
+
+    <!-- ========== FOOTER ========== -->
+    <footer class="bg-slate-900/80 mt-20">
+        <div class="max-w-[85rem] py-10 px-4 sm:px-6 lg:px-8 mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 items-center gap-6">
+                <div class="col-span-1 lg:col-span-2 flex flex-col items-center md:items-start">
+                    <a class="flex-none flex items-center gap-2" href="{{ url_for('home') }}">
+                      <img src="{{ url_for('static', filename='Logo.png') }}" alt="Code Forge Logo" class="h-10 w-auto">
+                      <span class="text-2xl font-extrabold text-white">Code Forge</span>
+                    </a>
+                    <p class="text-xs text-slate-400 sm:text-sm mt-3">© 2025 Code Forge. All rights reserved.</p>
+                </div>
+                
+                <div>
+                  <h4 class="text-lg font-semibold text-gray-200">Quick Links</h4>
+                  <div class="mt-3 grid space-y-3 text-sm">
+                    <p><a class="inline-flex gap-x-2 text-gray-400 hover:text-cyan-400" href="#">Events</a></p>
+                    <p><a class="inline-flex gap-x-2 text-gray-400 hover:text-cyan-400" href="#">About Us</a></p>
+                  </div>
+                </div>
+
+                <div>
+                    <h4 class="text-lg font-semibold text-gray-200">Connect</h4>
+                    <div class="mt-3 flex gap-x-4">
+                        <a class="w-10 h-10 inline-flex justify-center items-center gap-2 text-lg font-medium text-gray-400 rounded-full hover:bg-cyan-500 hover:text-white transition" href="#">
+                           <i class="fab fa-github"></i>
+                        </a>
+                         <a class="w-10 h-10 inline-flex justify-center items-center gap-2 text-lg font-medium text-gray-400 rounded-full hover:bg-blue-600 hover:text-white transition" href="#">
+                           <i class="fab fa-linkedin"></i>
+                        </a>
+                        <a class="w-10 h-10 inline-flex justify-center items-center gap-2 text-lg font-medium text-gray-400 rounded-full hover:bg-pink-600 hover:text-white transition" href="#">
+                           <i class="fab fa-instagram"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!-- ========== END FOOTER ========== -->
+    
+    <!-- Preline UI for Mobile Nav -->
+    <script src="https://cdn.jsdelivr.net/npm/preline@2.3.0/dist/preline.min.js"></script>
+    
+    <!-- AOS (Animate On Scroll) JS -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+      // Initialize AOS
+      AOS.init({
+        duration: 800,
+        once: true,
+      });
+    </script>
 </body>
 </html>

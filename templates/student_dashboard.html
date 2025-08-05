@@ -1,689 +1,345 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard</title>
-    <!-- Tailwind CSS CDN -->
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- AOS (Animate On Scroll) Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #000000; /* Black background */
-            margin: 0;
-            min-height: 100vh;
-            color: #E5E7EB; /* Light gray for general text */
-            display: flex;
-            flex-direction: column; /* For sticky footer */
+            background-color: #050816; /* A richer, deep navy-blue */
+            color: #E5E7EB;
+            /* Subtle moving gradient background */
+            background-image: radial-gradient(at 27% 37%, hsla(215, 98%, 61%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 97% 21%, hsla(187, 98%, 61%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 52% 99%, hsla(355, 98%, 61%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 10% 29%, hsla(256, 96%, 63%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 97% 96%, hsla(38, 60%, 62%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 33% 50%, hsla(222, 67%, 73%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 79% 53%, hsla(343, 68%, 63%, 0.1) 0px, transparent 50%);
+        }
+        
+        /* Glassmorphism effect for cards */
+        .glass-card {
+            background: rgba(17, 25, 40, 0.75);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.125);
         }
 
-        /* Ensure main content pushes footer down */
-        .content-wrapper {
-            flex-grow: 1;
-        }
-
-        /* Custom animations */
-        @keyframes pulse-slow {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-        .animate-pulse-slow {
-            animation: pulse-slow 3s infinite ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-            animation: fadeIn 0.6s ease-out forwards;
-        }
-
-        /* Typing effect for name */
-        @keyframes typing-reveal-width {
-            from { width: 0; }
-            to { width: var(--final-width); } /* Dynamically set width */
-        }
-        @keyframes typing-erase-width {
-            from { width: var(--final-width); }
-            to { width: 0; }
-        }
-
-        /* Blinking cursor animation */
-        @keyframes blinking-cursor {
-            from, to { opacity: 0; }
-            50% { opacity: 1; }
-        }
-
-        .blinking-cursor {
-            animation: none; /* Controlled by JS initially */
-            font-weight: normal; /* Ensure it's not bold */
-            display: inline-block; /* To allow opacity transition */
-            opacity: 0; /* Hidden initially, revealed by JS */
-            position: absolute; /* Position relative to wrapper */
-            top: 0;
-            left: 0; /* Will be animated by JS */
-            height: 100%; /* Match text height */
-            vertical-align: top; /* Align with top of text */
-        }
-
-        /* Button/Card Hover Effects */
-        .button-hover-animation:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(103, 232, 249, 0.4);
-        }
-        .logout-link-hover:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
-        }
-        .event-card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(103, 232, 249, 0.2);
-        }
-        .room-card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(103, 232, 249, 0.2);
-        }
-        .icon-hover:hover {
-            transform: translateY(-3px) scale(1.1);
-            color: #67E8F9;
-            text-shadow: 0 0 10px rgba(103, 232, 249, 0.6);
-        }
-
-        /* Mobile menu specific styles (from navbar component) */
-        .hamburger-icon span {
-            display: block;
-            width: 25px;
-            height: 3px;
-            background-color: #67E8F9;
-            margin: 5px auto;
-            transition: all 0.3s ease-in-out;
-        }
-        .hamburger-icon.open span:nth-child(1) {
-            transform: translateY(8px) rotate(45deg);
-        }
-        .hamburger-icon.open span:nth-child(2) {
-            opacity: 0;
-        }
-        .hamburger-icon.open span:nth-child(3) {
-            transform: translateY(-8px) rotate(-45deg);
-        }
-        .mobile-menu {
-            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+        /* QR Code transition */
+        .qr-code-container {
             max-height: 0;
+            opacity: 0;
             overflow: hidden;
-            opacity: 0;
+            transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
         }
-        .mobile-menu.open {
-            max-height: 300px; /* Adjust based on content */
+        .qr-code-container.visible {
+            max-height: 500px; /* A large enough value */
             opacity: 1;
-        }
-
-        /* QR Code reveal animation */
-        @keyframes scaleIn {
-            from { opacity: 0; transform: scale(0.5); }
-            to { opacity: 1; transform: scale(1); }
-        }
-        .qr-code-hidden {
-            opacity: 0;
-            transform: scale(0.5);
-            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
-            pointer-events: none;
-        }
-        .qr-code-visible {
-            opacity: 1;
-            transform: scale(1);
-            animation: scaleIn 0.4s ease-out forwards;
-            pointer-events: auto;
-        }
-        /* Event Image sizing for consistency */
-        .event-image {
-            width: 100%;
-            height: 200px; /* Fixed height for consistency */
-            object-fit: cover; /* Cover the area, cropping if necessary */
-        }
-
-        /* Hero Section Specific */
-        .hero-image {
-            width: 100%;
-            height: 400px; /* Fixed height for consistency */
-            object-fit: contain; /* Ensure entire image is visible */
-            border-radius: 1.5rem; /* Rounded corners */
-            /* Removed background-color to blend with section background */
-        }
-        @keyframes bounceEffect {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); } /* Adjust bounce height */
-        }
-        .animate-bounce-effect {
-            animation: bounceEffect 3s ease-in-out infinite; /* Subtle, continuous bounce */
-        }
-
-        /* Styles for the animated name effect */
-        .animated-name-wrapper {
-            position: relative;
-            display: inline-block; /* Important for width to wrap content */
-            vertical-align: middle; /* Align with text */
-            min-width: 100px; /* Give some initial width to prevent jump */
-        }
-        .animated-name-base {
-            white-space: nowrap; /* Prevent text wrapping within the spans */
-            font-weight: bold; /* Keep bold from h2 */
-            position: absolute; /* Position fill over outline */
-            top: 0;
-            left: 0;
-            /* Inherit font properties from wrapper */
-            font-size: inherit;
-            line-height: inherit;
-            font-weight: inherit;
-        }
-        #animated-name-outline {
-            color: transparent;
-            -webkit-text-stroke: 1px #67E8F9; /* Outline color */
-            z-index: 1; /* Ensure outline is behind fill when revealed */
-        }
-        #animated-name-fill {
-            color: #67E8F9; /* Fill color */
-            overflow: hidden; /* Hide parts not yet "typed" */
-            width: 0; /* Start with zero width */
-            z-index: 2; /* Ensure fill is on top */
-            animation: none; /* Controlled by JS */
         }
     </style>
 </head>
-<body>
-    <div class="content-wrapper">
-        <!-- Navigation Bar -->
-        <nav class="bg-gray-900 p-4 shadow-lg sticky top-0 z-50">
-            <div class="container mx-auto flex justify-between items-center">
-                <!-- Club Logo -->
-                <div class="flex items-center space-x-3">
-                    <a href="#" class="text-[#67E8F9] text-2xl font-extrabold flex items-center">
-                        <!-- Simple SVG for a modern logo placeholder -->
-                        <svg class="w-8 h-8 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
-                        </svg>
-                        Code Forge
-                    </a>
-                </div>
+<body class="flex flex-col min-h-screen">
 
-                <!-- Desktop Navigation Links -->
-                <div class="hidden md:flex space-x-8 items-center">
-                    <a href="{{ url_for('student_registered_events') }}"
-                        class="text-gray-300 hover:text-[#67E8F9] transition duration-300 ease-in-out nav-link-hover">Registered
-                        Events</a>
-                    <a href="{{ url_for('brainstorm') }}"
-                        class="text-gray-300 hover:text-[#67E8F9] transition duration-300 ease-in-out nav-link-hover">Brainstorming
-                        Ideas</a>
-                    <a href="{{ url_for('profile') }}"
-                        class="text-gray-300 hover:text-[#67E8F9] transition duration-300 ease-in-out nav-link-hover">Profile</a>
-                    <a href="{{ url_for('logout') }}"
-                        class="bg-[#EF4444] text-white px-5 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out logout-link-hover shadow-md hover:shadow-[#EF4444]/40">Logout</a>
-                </div>
-
-                <!-- Mobile Menu Button (Hamburger) -->
-                <div class="md:hidden">
-                    <button id="mobile-menu-button" class="hamburger-icon focus:outline-none">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Mobile Navigation Links (Hidden by default) -->
-            <div id="mobile-menu" class="mobile-menu md:hidden bg-gray-800 py-4 mt-4 rounded-b-lg">
-                <div class="flex flex-col items-center space-y-4">
-                    <a href="{{ url_for('student_registered_events') }}"
-                        class="block text-gray-300 hover:text-[#67E8F9] transition duration-300 ease-in-out nav-link-hover">Registered
-                        Events</a>
-                    <a href="{{ url_for('brainstorm') }}"
-                        class="block text-gray-300 hover:text-[#67E8F9] transition duration-300 ease-in-out nav-link-hover">Brainstorming
-                        Ideas</a>
-                    <a href="{{ url_for('profile') }}"
-                        class="block text-gray-300 hover:text-[#67E8F9] transition duration-300 ease-in-out nav-link-hover">Profile</a>
-                    <a href="{{ url_for('logout') }}"
-                        class="block bg-[#EF4444] text-white px-5 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out logout-link-hover shadow-md hover:shadow-[#EF4444]/40 w-max">Logout</a>
-                </div>
-            </div>
-        </nav>
-        <div class="bg-gray-800 text-white p-4 text-center text-lg font-medium shadow-inner">
-            User ID : <span class="text-gray-300 font-mono">{{ session['user_id'] }}</span>
+    <!-- ========== HEADER ========== -->
+    <header class="flex flex-wrap md:justify-start md:flex-nowrap z-50 w-full text-sm py-4 bg-slate-900/60 backdrop-blur-md sticky top-0">
+      <nav class="max-w-[85rem] w-full mx-auto px-4 flex items-center justify-between" aria-label="Global">
+        <a class="flex-none flex items-center gap-2" href="{{ url_for('home') }}">
+          <img src="{{ url_for('static', filename='Logo.png') }}" alt="Code Forge Logo" class="h-10 w-auto">
+          <span class="text-2xl font-extrabold text-white">Code Forge</span>
+        </a>
+        <div class="md:hidden">
+          <button type="button" id="navbar-toggle" class="hs-collapse-toggle p-2 inline-flex justify-center items-center gap-2 rounded-lg border border-gray-700 font-medium bg-gray-800 text-gray-400 shadow-sm hover:bg-gray-700" data-hs-collapse="#navbar-collapse" aria-controls="navbar-collapse" aria-label="Toggle navigation">
+            <i class="fa-solid fa-bars hs-collapse-open:block"></i>
+            <i class="fa-solid fa-xmark hs-collapse-open:hidden"></i>
+          </button>
         </div>
-
-        <!-- Hero Section (Combined Welcome and Motivational Content) -->
-        <section class="py-16 px-4 sm:px-6 lg:px-8 flex justify-center items-center bg-black">
-            <div class="container mx-auto flex flex-col md:flex-row items-center justify-between gap-10">
-                <div class="md:w-1/2 text-center md:text-left">
-                    <h2 class="text-5xl font-extrabold text-[#67E8F9] mb-4 flex items-center justify-center md:justify-start">
-                        <span id="animated-name-wrapper" class="animated-name-wrapper ml-3">
-                            <span id="animated-name-outline" class="animated-name-base" data-name="Welcome, {{ student[1] }}"></span>
-                            <span id="animated-name-fill" class="animated-name-base"></span>
-                        </span><span id="blinking-cursor" class="blinking-cursor">|</span>
-                    </h2><br><br><br>
-
-                    <p class="text-xl text-gray-300 mb-8">
-                        Dive into exciting <span class="text-[#67E8F9] font-semibold">events</span>, share your brilliant <span class="text-[#EF4444] font-semibold">ideas</span>, and connect with a community passionate about coding. Your journey to innovation starts here!
-                    </p>
-                </div>
-                <div class="md:w-1/2 flex justify-center md:justify-end">
-                    <!-- Hero image remains static for now, as it's a fixed asset. -->
-                    <img
-                        src="/static/robo.png"
-                        alt="Robo Image"
-                        class="hero-image rounded-3xl shadow-2xl transform transition-all duration-300 hover:scale-105 animate-bounce-effect"
-                        onerror="this.onerror=null;this.src='https://placehold.co/600x400/1F2937/67E8F9?text=Image+Error';"
-                    >
+        <div id="navbar-collapse" class="hs-collapse hidden overflow-hidden transition-all duration-300 basis-full grow md:block md:w-auto md:basis-auto md:order-2">
+          <div class="flex flex-col gap-5 mt-5 md:flex-row md:items-center md:justify-end md:mt-0 md:pl-5">
+            <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('home') }}">Home</a>
+            {% if session['user'] %}
+                <a class="font-medium text-cyan-400" href="{{ url_for('dashboard') }}" aria-current="page">Dashboard</a>
+                <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('student_registered_events') }}">Registered Events</a>
+                <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('brainstorm') }}">Brainstorm</a>
+                <a class="inline-block bg-red-500 text-white font-bold px-6 py-3 rounded-lg shadow-lg shadow-red-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-red-500/50 text-sm" href="{{ url_for('logout') }}">Logout</a>
+            {% else %}
+                <a class="inline-block bg-cyan-400 text-slate-900 font-bold px-6 py-3 rounded-lg shadow-lg shadow-cyan-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-cyan-500/50 text-sm" href="{{ url_for('login') }}">Login</a>
+            {% endif %}
+          </div>
+        </div>
+      </nav>
+    </header>
+    <!-- ========== END HEADER ========== -->
+    
+    <!-- Flex-grow container to push footer down -->
+    <main class="flex-grow">
+        <!-- ========== DASHBOARD HERO ========== -->
+        <div class="relative bg-slate-900/80 overflow-hidden">
+            <div class="max-w-[85rem] mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                <div class="grid md:grid-cols-2 gap-8 items-center">
+                    <div data-aos="fade-right">
+                        <h1 class="text-3xl font-bold text-white sm:text-4xl">
+                            Welcome, <span class="text-cyan-400">{{ student.name }}</span>
+                        </h1>
+                        <p class="mt-3 text-lg text-gray-400">
+                            This is your personal hub for all club activities. Let's create something amazing today!
+                        </p>
+                        <p class="mt-5 text-sm font-mono text-gray-500">User ID: {{ session.user_id }}</p>
+                    </div>
+                     <div class="relative" data-aos="zoom-in-left" data-aos-delay="200">
+                        <img class="w-full max-w-md mx-auto rounded-md" src="{{ url_for('static', filename='robo.png') }}" alt="Code Forge Robot Mascot">
+                    </div>
                 </div>
             </div>
-        </section>
+        </div>
+        <!-- ========== END DASHBOARD HERO ========== -->
 
-        <!-- Upcoming Events Section -->
-        <section class="py-16 px-4 sm:px-6 lg:px-8 bg-black">
-            <div class="container mx-auto">
-                <h2 class="text-5xl font-extrabold text-center mb-12 text-[#67E8F9] leading-tight animate-pulse-slow">
-                    Upcoming Events
-                </h2>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                    {% if events %}
-                    {% for event in events %}
-                    <div
-                        class="bg-gray-900 rounded-xl shadow-lg overflow-hidden border border-gray-800 transition-all duration-300 event-card-hover">
-                        {# Updated to use event.image_url directly #}
-                        {% if event.image_url %}
-                        <img src="{{ event.image_url }}" alt="{{ event.title }} Event Image"
-                            class="w-full h-48 object-cover rounded-t-lg"
-                            onerror="this.onerror=null;this.src='https://placehold.co/600x400/1F2937/67E8F9?text=Image+Error';"
-                        >
-                        {% else %}
-                        <img src="https://placehold.co/600x400/1F2937/67E8F9?text=Code+Forge" alt="No Image"
-                            class="w-full h-48 object-cover rounded-t-lg"
-                            onerror="this.onerror=null;this.src='https://placehold.co/600x400/1F2937/67E8F9?text=Image+Error';"
-                        >
-                        {% endif %}
-                        <div class="p-6">
-                            <h3 class="text-3xl font-bold text-white mb-2"><i class="fa-solid fa-thumbtack text-gray-500 mr-2"></i> {{ event.title }}</h3>
-                            <p class="text-[#EF4444] text-sm mb-4"><i class="fa-regular fa-calendar-days mr-2"></i> {{
-                                event.date }}</p>
-                            <p id="short" class="text-gray-300 text-base leading-relaxed mb-6">
-                                {{ event.short_description }}
-                            </p>
-                            <a href="{{ url_for('event_detail', event_id=event.id) }}" class="block">
-                                <button
-                                    class="w-full bg-[#67E8F9] text-gray-900 font-bold py-3 rounded-lg hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:shadow-[#67E8F9]/40">
-                                    Know More
-                                </button>
-                            </a>
+        <!-- ========== QUICK ACTIONS & STATS ========== -->
+        <div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Profile Card -->
+                <a class="group flex flex-col h-full glass-card rounded-xl p-6 transition-all duration-300 hover:border-cyan-400" href="{{ url_for('profile') }}" data-aos="fade-up">
+                    <div class="flex items-center gap-x-4">
+                        <i class="fa-solid fa-user-astronaut text-4xl text-cyan-400"></i>
+                        <div>
+                            <h3 class="font-semibold text-white text-lg">My Profile</h3>
+                            <p class="text-sm text-gray-400">View and update your details</p>
                         </div>
                     </div>
-                    {% endfor %}
-                    {% else %}
-                    <div class="col-span-full text-center text-gray-400 text-lg mt-8">
-                        <p>No events available.</p>
+                </a>
+
+                <!-- Registered Events Card -->
+                <a class="group flex flex-col h-full glass-card rounded-xl p-6 transition-all duration-300 hover:border-cyan-400" href="{{ url_for('student_registered_events') }}" data-aos="fade-up" data-aos-delay="100">
+                    <div class="flex items-center gap-x-4">
+                        <i class="fa-solid fa-calendar-check text-4xl text-cyan-400"></i>
+                        <div>
+                            <h3 class="font-semibold text-white text-lg">Registered Events</h3>
+                            <p class="text-sm text-gray-400">Check your event submissions</p>
+                        </div>
                     </div>
-                    {% endif %}
-                </div>
+                </a>
+
+                <!-- Brainstorm Card -->
+                <a class="group flex flex-col h-full glass-card rounded-xl p-6 transition-all duration-300 hover:border-red-400" href="{{ url_for('brainstorm') }}" data-aos="fade-up" data-aos-delay="200">
+                    <div class="flex items-center gap-x-4">
+                        <i class="fa-solid fa-lightbulb text-4xl text-red-400"></i>
+                        <div>
+                            <h3 class="font-semibold text-white text-lg">Brainstorm Hub</h3>
+                            <p class="text-sm text-gray-400">Collaborate and create ideas</p>
+                        </div>
+                    </div>
+                </a>
             </div>
-        </section>
-
-        <!-- Brainstorming Banner Section -->
-        <section class="py-16 px-4 sm:px-6 lg:px-8 bg-gray-900 text-white animate-fade-in">
-            <div class="container mx-auto text-center">
-                <h2 class="text-5xl font-extrabold mb-6 text-[#67E8F9] leading-tight animate-pulse-slow">
-                    Spark Your Next Big Idea!
-                </h2>
-                <p class="text-xl text-gray-300 mb-10 max-w-3xl mx-auto">
-                    Collaborate with fellow coders, share innovative concepts, and bring your wildest ideas to life in
-                    dedicated brainstorming rooms.
-                </p>
-
-                <!-- Call to Action for Creating a Room -->
-                <div
-                    class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 mb-12 transform transition-all duration-300 hover:scale-[1.01] hover:shadow-xl">
-                    <h3 class="text-3xl font-bold text-white mb-4">Ready to Innovate?</h3>
-                    <p class="text-lg text-gray-400 mb-6">
-                        It's simple! Just head over to the <span class="text-[#67E8F9] font-semibold">Brainstorming
-                            Ideas</span> page, enter a title for your room, and click "Create Room" to start a
-                        discussion.
-                    </p>
-                    <a href="{{ url_for('brainstorm') }}" class="inline-block">
-                        <button
-                            class="bg-[#EF4444] text-white px-8 py-3 rounded-lg font-bold text-xl hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:shadow-[#EF4444]/40">
-                            <i class="fas fa-lightbulb mr-3"></i> Go to Brainstorming Hub
-                        </button>
-                    </a>
-                </div>
-
-                <h3 class="text-4xl font-extrabold mb-10 text-[#67E8F9] leading-tight">
-                    Explore Featured Idea Rooms
-                </h3>
-
-                <!-- Showcase Rooms Grid -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                    <!-- Room Card 1 -->
-                    <div
-                        class="bg-gray-800 p-6 rounded-xl shadow-md border border-gray-700 transition-all duration-300 room-card-hover">
-                        <i class="fas fa-code text-[#67E8F9] text-4xl mb-4"></i>
-                        <h4 class="text-xl font-semibold text-white mb-2">Future of Web Dev</h4>
-                        <p class="text-gray-400 text-sm">Discussing latest frameworks & trends.</p>
-                    </div>
-                    <!-- Room Card 2 -->
-                    <div
-                        class="bg-gray-800 p-6 rounded-xl shadow-md border border-gray-700 transition-all duration-300 room-card-hover">
-                        <i class="fas fa-robot text-[#EF4444] text-4xl mb-4"></i>
-                        <h4 class="text-xl font-semibold text-white mb-2">AI in Everyday Life</h4>
-                        <p class="text-gray-400 text-sm">Exploring practical AI applications.</p>
-                    </div>
-                    <!-- Room Card 3 -->
-                    <div
-                        class="bg-gray-800 p-6 rounded-xl shadow-md border border-gray-700 transition-all duration-300 room-card-hover">
-                        <i class="fas fa-gamepad text-[#67E8F9] text-4xl mb-4"></i>
-                        <h4 class="text-xl font-semibold text-white mb-2">Game Dev Challenges</h4>
-                        <p class="text-gray-400 text-sm">Brainstorming solutions for common hurdles.</p>
-                    </div>
-                    <!-- Room Card 4 -->
-                    <div
-                        class="bg-gray-800 p-6 rounded-xl shadow-md border border-gray-700 transition-all duration-300 room-card-hover">
-                        <i class="fas fa-cloud text-[#EF4444] text-4xl mb-4"></i>
-                        <h4 class="text-xl font-semibold text-white mb-2">Decentralized Apps</h4>
-                        <p class="text-gray-400 text-sm">Dive into blockchain & DApp concepts.</p>
-                    </div>
-
-                </div>
-            </div>
-        </section>
-
-        <!-- Event Winners Section -->
-        <section class="py-16 px-4 sm:px-6 lg:px-8 bg-black">
-            <div class="container mx-auto">
-                <h3 class="text-5xl font-extrabold text-center mb-12 text-[#67E8F9] leading-tight animate-pulse-slow">
-                    Event Winners
-                </h3>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                    {% if results %}
-                    {% for event_title, winners in results.items() %}
-                    <div class="bg-gray-900 p-8 rounded-xl shadow-lg border border-gray-800 animate-fade-in">
-                        <strong class="text-3xl font-bold text-white mb-4 block">
-                            {{ event_title }}
-                        </strong>
-                        <ul class="list-none space-y-3">
-                            {% for winner in winners %}
-                            <li class="flex items-center text-gray-300 text-lg">
-                                <span class="w-2 h-2 bg-[#67E8F9] rounded-full mr-3 flex-shrink-0"></span>
-                                <span class="font-semibold text-white">{{ winner[0] }}</span>:
-                                <span class="ml-1 text-gray-400">{{ winner[1] }}</span>
-                                {% if winner[2] %}
-                                <span class="text-gray-500 ml-1">({{ winner[2] }})</span>
-                                {% endif %}
-                            </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    {% endfor %}
-                    {% else %}
-                    <div class="col-span-full text-center text-gray-400 text-lg mt-8">
-                        <p>No winners announced yet.</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </section>
-
-        <!-- Donation Banner Section -->
-        <section class="py-16 px-4 sm:px-6 lg:px-8 bg-gray-900 text-white animate-fade-in">
-            <div class="container mx-auto text-center">
-                <h2 class="text-5xl font-extrabold mb-6 text-[#67E8F9] leading-tight animate-pulse-slow">
-                    Support Our Vision!
-                </h2>
-                <p class="text-xl text-gray-300 mb-10 max-w-3xl mx-auto">
-                    "The best way to predict the future is to create it. Your contribution fuels our innovation and
-                    empowers
-                    the next generation of coders."
-                </p>
-
-                <!-- Donation Call to Action -->
-                <div
-                    class="bg-gray-800 p-6 rounded-xl shadow-lg mb-12 transform transition-all duration-300 hover:scale-[1.01] hover:shadow-xl">
-                    <h3 class="text-3xl font-bold text-white mb-4">Make a Difference Today!</h3>
-                    <p class="text-lg text-gray-400 mb-6">
-                        Every contribution, big or small, helps us organize more events, provide better resources, and
-                        foster a thriving coding community.
-                    </p>
-                    <button id="donateButton"
-                        class="bg-[#EF4444] text-white px-8 py-3 rounded-lg font-bold text-xl hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:shadow-[#EF4444]/40">
-                        <i class="fas fa-heart mr-3"></i> Donate Now
-                    </button>
-
-                    <!-- QR Code Section (Initially Hidden) -->
-                    <div id="qrCodeContainer" class="mt-8 qr-code-hidden flex flex-col items-center">
-                        <p class="text-gray-300 text-lg mb-4">Scan to Donate:</p>
-                        <img src="https://placehold.co/200x200/1F2937/67E8F9?text=QR+Code" alt="Donation QR Code"
-                            class="max-w-xs h-auto rounded-lg shadow-xl"
-                            onerror="this.onerror=null;this.src='https://placehold.co/200x200/1F2937/EF4444?text=QR+Error';">
-                        <p class="text-gray-400 text-sm mt-4">Thank you for your generosity!</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- About Us Section -->
-        <section class="py-16 px-4 sm:px-6 lg:px-8 bg-black animate-fade-in">
-            <div class="container mx-auto text-center max-w-4xl">
-                <h2 class="text-5xl font-extrabold mb-6 text-[#67E8F9] leading-tight animate-pulse-slow">
-                    About Code Forge
-                </h2>
-                <p class="text-xl text-gray-300 mb-10">
-                    Code Forge is a dynamic coding and innovation-focused technical club dedicated to enhancing coding
-                    culture and nurturing student-led initiatives.
-                </p>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-                    <!-- Vision Section -->
-                    <div
-                        class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
-                        <i class="fas fa-eye text-[#EF4444] text-5xl mb-4"></i>
-                        <h3 class="text-3xl font-bold text-white mb-4">Our Vision</h3>
-                        <p class="text-lg text-gray-400">
-                            To foster a competitive and creative coding culture that empowers students to become
-                            innovators and researchers, shaping the future of technology.
-                        </p>
-                    </div>
-
-                    <!-- Mission Section -->
-                    <div
-                        class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
-                        <i class="fas fa-rocket text-[#67E8F9] text-5xl mb-4"></i>
-                        <h3 class="text-3xl font-bold text-white mb-4">Our Mission</h3>
-                        <p class="text-lg text-gray-400">
-                            To engage students in structured learning through coding challenges, workshops, and
-                            collaborative projects, culminating in the launch of startup prototypes or the submission of
-                            Q1-level research paper.
-                        </p>
-                    </div>
-                </div>
-
-                <p class="text-lg text-gray-400 max-w-2xl mx-auto">
-                    We aim to build real-world tech skills, foster an innovation and research mindset, and position our
-                    department as a hub of coding and startup excellence.
-                </p>
-            </div>
-        </section>
-    </div>
-
-    <!-- Footer Section -->
-    <footer class="bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 text-gray-400 border-t border-gray-800">
-        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center text-center md:text-left space-y-8 md:space-y-0">
-
-            <!-- Club Logo/Name -->
-            <div class="flex flex-col items-center md:items-start">
-                <a href="#" class="text-[#67E8F9] text-3xl font-extrabold tracking-wide mb-2">Code Forge</a>
-                <p class="text-sm">Innovating the future, one line of code at a time.</p>
-            </div>
-
-            <!-- Quick Links -->
-            <div class="flex flex-col items-center md:items-start space-y-2">
-                <h4 class="text-lg font-semibold text-white mb-2">Quick Links</h4>
-                <a href="#" class="hover:text-[#67E8F9] transition duration-200">Upcoming Events</a>
-                <a href="#" class="hover:text-[#67E8F9] transition duration-200">Brainstorming Ideas</a>
-                <a href="#" class="hover:text-[#67E8F9] transition duration-200">My Profile</a>
-                <a href="#" class="hover:text-[#67E8F9] transition duration-200">About Us</a>
-            </div>
-
-            <!-- Social Media Links -->
-            <div class="flex flex-col items-center md:items-start">
-                <h4 class="text-lg font-semibold text-white mb-2">Connect With Us</h4>
-                <div class="flex space-x-6">
-                    <a href="#" class="text-gray-400 text-2xl icon-hover transition duration-300">
-                        <i class="fab fa-facebook"></i>
-                    </a>
-                    <a href="#" class="text-gray-400 text-2xl icon-hover transition duration-300">
-                        <i class="fab fa-twitter"></i>
-                    </a>
-                    <a href="#" class="text-gray-400 text-2xl icon-hover transition duration-300">
-                        <i class="fab fa-instagram"></i>
-                    </a>
-                    <a href="#" class="text-gray-400 text-2xl icon-hover transition duration-300">
-                        <i class="fab fa-linkedin"></i>
-                    </a>
-                    <a href="#" class="text-gray-400 text-2xl icon-hover transition duration-300">
-                        <i class="fab fa-github"></i>
-                    </a>
-                </div>
-            </div>
-
         </div>
+        <!-- ========== END QUICK ACTIONS & STATS ========== -->
 
-        <div class="container mx-auto mt-10 pt-8 border-t border-gray-800 text-center text-sm text-gray-500">
-            &copy; 2025 Code Forge Club. All rights reserved.
+
+        <!-- ========== ALL AVAILABLE EVENTS ========== -->
+        <div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
+          <div class="max-w-2xl mx-auto text-center mb-10 lg:mb-14" data-aos="fade-up">
+            <h2 class="text-3xl font-bold md:text-4xl md:leading-tight text-white">Explore All Events</h2>
+            <p class="mt-1 text-gray-400">Find your next challenge. Register for an event to get started.</p>
+          </div>
+
+          <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% if events %}
+              {% for event in events %}
+              <div class="group flex flex-col h-full glass-card rounded-xl p-5 transition-all duration-300 hover:border-cyan-400" href="#" data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}">
+                <div class="aspect-w-16 aspect-h-9">
+                    <img class="w-full object-cover rounded-xl" src="{{ event.image_url or 'https://placehold.co/600x400/050816/FFFFFF?text=Event' }}" alt="{{ event.title }}">
+                </div>
+                <div class="my-6">
+                    <h3 class="text-xl font-semibold text-white">
+                        {{ event.title }}
+                    </h3>
+                    <p class="mt-2 text-sm text-red-400 font-semibold">{{ event.date.strftime('%B %d, %Y') }}</p>
+                    <p class="mt-5 text-gray-400">
+                        {{ event.short_description }}
+                    </p>
+                </div>
+                <div class="mt-auto">
+                    <a href="{{ url_for('event_detail', event_id=event.id) }}" class="inline-block w-full text-center bg-cyan-400 text-slate-900 font-bold px-6 py-3 rounded-lg shadow-lg shadow-cyan-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-cyan-500/50">Know More & Register</a>
+                </div>
+              </div>
+              {% endfor %}
+            {% else %}
+            <div class="col-span-full text-center text-gray-500 py-10">
+                <p>No events available at the moment. Stay tuned!</p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        <!-- ========== END ALL AVAILABLE EVENTS ========== -->
+
+
+        <!-- ========== WINNERS SECTION ========== -->
+        <div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
+            <div class="max-w-2xl mx-auto text-center mb-10 lg:mb-14" data-aos="fade-up">
+                <h2 class="text-3xl font-bold md:text-4xl md:leading-tight text-white">Hall of Fame</h2>
+                <p class="mt-1 text-gray-400">Celebrating the champions of our past events.</p>
+            </div>
+            
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% if results %}
+                {% for event_title, winners in results.items() %}
+                <div class="group flex flex-col h-full glass-card rounded-xl p-6" data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}">
+                    <div class="text-center">
+                        <i class="fa-solid fa-trophy text-5xl text-yellow-400"></i>
+                        <h3 class="text-2xl font-bold text-white mt-4">{{ event_title }}</h3>
+                    </div>
+                    <ul class="mt-6 space-y-3">
+                        {% for winner in winners %}
+                        <li class="flex items-center gap-x-3">
+                            <span class="text-lg font-bold text-cyan-400">{{ winner[1] }}</span>
+                            <span class="text-gray-300">{{ winner[0] }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-span-full text-center text-gray-500 py-10">
+                    <p>Winners from recent events will be announced here soon!</p>
+                </div>
+            {% endif %}
+            </div>
+        </div>
+        <!-- ========== END WINNERS SECTION ========== -->
+        
+        <!-- ========== DONATION BANNER ========== -->
+        <div class="bg-slate-900/80">
+            <div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
+                <div class="max-w-2xl mx-auto text-center" data-aos="fade-up">
+                    <h2 class="text-3xl font-bold md:text-4xl md:leading-tight text-white">Support Our Vision</h2>
+                    <p class="mt-1 text-gray-400">Your contribution fuels our innovation and empowers the next generation of coders.</p>
+                </div>
+
+                <div class="mt-10 max-w-2xl mx-auto glass-card p-6 rounded-2xl" data-aos="fade-up" data-aos-delay="200">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-white">Make a Difference Today!</h3>
+                        <p class="text-sm text-gray-400 mt-1">Every contribution helps us organize more events and provide better resources.</p>
+                        <button id="donateButton" class="mt-5 inline-block bg-red-500 text-white font-bold px-6 py-3 rounded-lg shadow-lg shadow-red-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-red-500/50">
+                            <i class="fas fa-heart mr-2"></i> Donate Now
+                        </button>
+                    </div>
+                    
+                    <div id="qrCodeContainer" class="qr-code-container text-center mt-4">
+                        <div class="inline-block p-4 bg-white rounded-lg">
+                            <img src="https://placehold.co/200x200/050816/FFFFFF?text=QR+Code" alt="Donation QR Code" class="w-40 h-40">
+                        </div>
+                        <p class="text-gray-400 text-xs mt-2">Scan to contribute. Thank you!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ========== END DONATION BANNER ========== -->
+
+        <!-- ========== ABOUT US SECTION ========== -->
+        <div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
+            <div class="max-w-2xl mx-auto text-center mb-10 lg:mb-14" data-aos="fade-up">
+                <h2 class="text-3xl font-bold md:text-4xl md:leading-tight text-white">About Code Forge</h2>
+                <p class="mt-1 text-gray-400">A dynamic coding and innovation-focused technical club dedicated to enhancing coding culture and nurturing student-led initiatives.</p>
+            </div>
+
+            <div class="grid sm:grid-cols-2 lg:grid-cols-2 gap-6 items-center">
+                <div class="group flex flex-col h-full text-center glass-card rounded-xl p-8" data-aos="fade-up" data-aos-delay="100">
+                    <i class="fas fa-eye text-5xl text-cyan-400 mx-auto"></i>
+                    <h3 class="text-2xl font-bold text-white mt-4">Our Vision</h3>
+                    <p class="mt-3 text-gray-400">
+                        To foster a competitive and creative coding culture that empowers students to become innovators and researchers, shaping the future of technology.
+                    </p>
+                </div>
+
+                <div class="group flex flex-col h-full text-center glass-card rounded-xl p-8" data-aos="fade-up" data-aos-delay="200">
+                    <i class="fas fa-rocket text-5xl text-red-400 mx-auto"></i>
+                    <h3 class="text-2xl font-bold text-white mt-4">Our Mission</h3>
+                    <p class="mt-3 text-gray-400">
+                        To engage students in structured learning through coding challenges, workshops, and collaborative projects, culminating in the launch of startup prototypes or research papers.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <!-- ========== END ABOUT US SECTION ========== -->
+    </main>
+
+    <!-- ========== FOOTER ========== -->
+    <footer class="bg-slate-900/80 mt-20">
+        <div class="max-w-[85rem] py-10 px-4 sm:px-6 lg:px-8 mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 items-center gap-6">
+                <div class="col-span-1 lg:col-span-2 flex flex-col items-center md:items-start">
+                    <a class="flex-none flex items-center gap-2" href="{{ url_for('home') }}">
+                      <img src="{{ url_for('static', filename='Logo.png') }}" alt="Code Forge Logo" class="h-10 w-auto">
+                      <span class="text-2xl font-extrabold text-white">Code Forge</span>
+                    </a>
+                    <p class="text-xs text-slate-400 sm:text-sm mt-3">© 2025 Code Forge. All rights reserved.</p>
+                </div>
+                
+                <div>
+                  <h4 class="text-lg font-semibold text-gray-200">Quick Links</h4>
+                  <div class="mt-3 grid space-y-3 text-sm">
+                    <p><a class="inline-flex gap-x-2 text-gray-400 hover:text-cyan-400" href="#">Events</a></p>
+                    <p><a class="inline-flex gap-x-2 text-gray-400 hover:text-cyan-400" href="#">About Us</a></p>
+                  </div>
+                </div>
+
+                <div>
+                    <h4 class="text-lg font-semibold text-gray-200">Connect</h4>
+                    <div class="mt-3 flex gap-x-4">
+                        <a class="w-10 h-10 inline-flex justify-center items-center gap-2 text-lg font-medium text-gray-400 rounded-full hover:bg-cyan-500 hover:text-white transition" href="#">
+                           <i class="fab fa-github"></i>
+                        </a>
+                         <a class="w-10 h-10 inline-flex justify-center items-center gap-2 text-lg font-medium text-gray-400 rounded-full hover:bg-blue-600 hover:text-white transition" href="#">
+                           <i class="fab fa-linkedin"></i>
+                        </a>
+                        <a class="w-10 h-10 inline-flex justify-center items-center gap-2 text-lg font-medium text-gray-400 rounded-full hover:bg-pink-600 hover:text-white transition" href="#">
+                           <i class="fab fa-instagram"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </footer>
-
+    <!-- ========== END FOOTER ========== -->
+    
+    <!-- Preline UI for Mobile Nav -->
+    <script src="https://cdn.jsdelivr.net/npm/preline@2.3.0/dist/preline.min.js"></script>
+    
+    <!-- AOS (Animate On Scroll) JS -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
-        // JavaScript for mobile menu toggle
-        // Declared within DOMContentLoaded to avoid global re-declaration
-        document.addEventListener('DOMContentLoaded', () => {
-            const mobileMenuButton = document.getElementById('mobile-menu-button');
-            const mobileMenu = document.getElementById('mobile-menu');
+      // Initialize AOS
+      AOS.init({
+        duration: 800,
+        once: true,
+      });
 
-            if (mobileMenuButton && mobileMenu) { // Check if elements exist
-                mobileMenuButton.addEventListener('click', () => {
-                    mobileMenu.classList.toggle('open');
-                    mobileMenuButton.classList.toggle('open');
-                });
-            }
-
-            const donateButton = document.getElementById('donateButton');
-            const qrCodeContainer = document.getElementById('qrCodeContainer');
-
-            // Ensure elements exist before adding event listener
-            if (donateButton && qrCodeContainer) {
-                donateButton.addEventListener('click', () => {
-                    // Toggle visibility and animation classes
-                    if (qrCodeContainer.classList.contains('qr-code-hidden')) {
-                        qrCodeContainer.classList.remove('qr-code-hidden');
-                        qrCodeContainer.classList.add('qr-code-visible');
-                    } else {
-                        qrCodeContainer.classList.remove('qr-code-visible');
-                        qrCodeContainer.classList.add('qr-code-hidden');
-                    }
-                });
-            }
-
-            // Typing effect for username
-            const animatedNameWrapper = document.getElementById('animated-name-wrapper');
-            const animatedNameOutline = document.getElementById('animated-name-outline');
-            const animatedNameFill = document.getElementById('animated-name-fill');
-            const blinkingCursor = document.getElementById('blinking-cursor');
-
-            // Only proceed if all elements for the typing effect exist
-            if (animatedNameWrapper && animatedNameOutline && animatedNameFill && blinkingCursor) {
-                const userName = animatedNameOutline.dataset.name; // Get name from data attribute
-
-                // Set initial content for both spans
-                animatedNameOutline.textContent = userName;
-                animatedNameFill.textContent = userName;
-
-                // Measure the actual width of the text to set as a CSS variable
-                // Create a temporary element to measure text width
-                const tempSpan = document.createElement('span');
-                tempSpan.style.visibility = 'hidden';
-                tempSpan.style.position = 'absolute';
-                tempSpan.style.whiteSpace = 'nowrap';
-                // Ensure font styles match the animated elements for accurate measurement
-                tempSpan.style.fontSize = getComputedStyle(animatedNameWrapper).fontSize;
-                tempSpan.style.lineHeight = getComputedStyle(animatedNameWrapper).lineHeight;
-                tempSpan.style.fontWeight = getComputedStyle(animatedNameWrapper).fontWeight;
-                tempSpan.textContent = userName;
-                document.body.appendChild(tempSpan);
-                const textWidth = tempSpan.offsetWidth;
-                document.body.removeChild(tempSpan);
-
-                // Set CSS variable for animation
-                animatedNameFill.style.setProperty('--final-width', `${textWidth}px`);
-                animatedNameWrapper.style.width = `${textWidth}px`; // Set wrapper width to prevent layout shift
-
-                // Calculate duration based on name length for a natural typing speed
-                const typingDuration = userName.length * 0.1; // 100ms per character
-                const eraseDuration = userName.length * 0.05; // Faster erase
-                const pauseDuration = 1; // Pause before erasing/retyping
-
-                // Define the sequence of animations
-                function startTypingAnimation() {
-                    // Reset animations
-                    animatedNameFill.style.animation = 'none';
-                    blinkingCursor.style.animation = 'none';
-                    blinkingCursor.style.left = '0'; // Reset cursor position
-                    animatedNameFill.style.width = '0'; // Start hidden
-
-                    // 1. Type in
-                    setTimeout(() => {
-                        animatedNameFill.style.animation = `typing-reveal-width ${typingDuration}s steps(${userName.length}, end) forwards`;
-                        blinkingCursor.style.animation = `cursor-follow ${typingDuration}s steps(${userName.length}, end) forwards, blinking-cursor 1s steps(1) infinite`;
-                        blinkingCursor.style.opacity = '1';
-                    }, 100); // Small delay to ensure reset
-
-                    // 2. Pause at end of typing
-                    setTimeout(() => {
-                        blinkingCursor.style.animation = 'blinking-cursor 1s steps(1) infinite'; // Only blinking
-                    }, 100 + typingDuration * 1000);
-
-                    // 3. Erase
-                    setTimeout(() => {
-                        animatedNameFill.style.animation = `typing-erase-width ${eraseDuration}s steps(${userName.length}, start) forwards`;
-                        blinkingCursor.style.animation = `cursor-follow-reverse ${eraseDuration}s steps(${userName.length}, start) forwards, blinking-cursor 1s steps(1) infinite`;
-                    }, 100 + typingDuration * 1000 + pauseDuration * 1000);
-
-                    // 4. Pause after erase and restart
-                    setTimeout(() => {
-                        startTypingAnimation(); // Loop the animation
-                    }, 100 + typingDuration * 1000 + pauseDuration * 1000 + eraseDuration * 1000 + pauseDuration * 1000);
-                }
-
-                // Dynamically create and insert the @keyframes for cursor-follow and cursor-follow-reverse
-                const styleElement = document.createElement('style');
-                styleElement.innerHTML = `
-                    @keyframes cursor-follow {
-                        from { left: 0; }
-                        to { left: ${textWidth}px; }
-                    }
-                    @keyframes cursor-follow-reverse {
-                        from { left: ${textWidth}px; }
-                        to { left: 0; }
-                    }
-                `;
-                document.head.appendChild(styleElement);
-
-                // Start the animation sequence
-                startTypingAnimation();
-            }
-        });
+      document.addEventListener('DOMContentLoaded', () => {
+        // Donation Button Logic
+        const donateButton = document.getElementById('donateButton');
+        const qrCodeContainer = document.getElementById('qrCodeContainer');
+        if (donateButton && qrCodeContainer) {
+            donateButton.addEventListener('click', () => {
+                qrCodeContainer.classList.toggle('visible');
+            });
+        }
+      });
     </script>
 </body>
 </html>
