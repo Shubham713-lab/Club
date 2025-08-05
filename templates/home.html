@@ -1,469 +1,339 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Code Forge - Home</title>
-    <!-- Tailwind CSS CDN -->
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- AOS (Animate On Scroll) Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #000000; /* Black background */
-            margin: 0;
-            min-height: 100vh;
-            color: #E5E7EB; /* Light gray for general text */
-            display: flex;
-            flex-direction: column; /* For sticky footer */
-            /* Background light effect */
-            background: linear-gradient(45deg, #000000, #0a0a0a, #000000);
-            background-size: 400% 400%;
-            animation: gradientShift 20s ease infinite;
+            background-color: #050816; /* A richer, deep navy-blue */
+            color: #E5E7EB;
+            /* Subtle moving gradient background */
+            background-image: radial-gradient(at 27% 37%, hsla(215, 98%, 61%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 97% 21%, hsla(187, 98%, 61%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 52% 99%, hsla(355, 98%, 61%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 10% 29%, hsla(256, 96%, 63%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 97% 96%, hsla(38, 60%, 62%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 33% 50%, hsla(222, 67%, 73%, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 79% 53%, hsla(343, 68%, 63%, 0.1) 0px, transparent 50%);
+        }
+        
+        /* Glassmorphism effect for cards */
+        .glass-card {
+            background: rgba(17, 25, 40, 0.75);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.125);
         }
 
-        /* Ensure main content pushes footer down */
-        .content-wrapper {
-            flex-grow: 1;
-        }
-
-        /* Custom animations */
-        @keyframes pulse-slow {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-        .animate-pulse-slow {
-            animation: pulse-slow 3s infinite ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-            animation: fadeIn 0.6s ease-out forwards;
-        }
-
-        @keyframes scaleIn {
-            from { opacity: 0; transform: scale(0.5); }
-            to { opacity: 1; transform: scale(1); }
-        }
-        .qr-code-hidden {
+        /* QR Code transition */
+        .qr-code-container {
+            max-height: 0;
             opacity: 0;
-            transform: scale(0.5);
-            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
-            pointer-events: none;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
         }
-        .qr-code-visible {
+        .qr-code-container.visible {
+            max-height: 500px; /* A large enough value */
             opacity: 1;
-            transform: scale(1);
-            animation: scaleIn 0.4s ease-out forwards;
-            pointer-events: auto;
-        }
-
-        /* Button/Card Hover Effects */
-        .button-hover-animation:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(103, 232, 249, 0.4);
-        }
-        .event-card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(103, 232, 249, 0.2);
-        }
-        .room-card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(103, 232, 249, 0.2);
-        }
-        .icon-hover:hover {
-            transform: translateY(-3px) scale(1.1);
-            color: #67E8F9;
-            text-shadow: 0 0 10px rgba(103, 232, 249, 0.6);
-        }
-
-        /* Hero Section Specific */
-        .hero-image {
-            width: 100%;
-            height: auto; /* Changed to auto to maintain aspect ratio */
-            max-height: 400px; /* Set a max height to control overall size */
-            object-fit: contain; /* Changed from cover to contain */
-            border-radius: 1.5rem; /* Rounded corners */
-        }
-        @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(50px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        .animate-slide-in-right {
-            animation: slideInRight 0.8s ease-out forwards;
-            animation-delay: 0.5s; /* Delay to appear after text */
-            opacity: 0; /* Start hidden */
-        }
-
-        /* New: Bouncing effect for hero image */
-        @keyframes bounceEffect {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); } /* Adjust bounce height */
-        }
-        .animate-bounce-effect {
-            animation: bounceEffect 3s ease-in-out infinite; /* Subtle, continuous bounce */
-        }
-
-        /* New: Background light effect */
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
         }
     </style>
 </head>
-<body>
-    <!-- Navigation Bar -->
-    <nav class="bg-gray-900 p-4 shadow-lg sticky top-0 z-50">
-            <div class="container mx-auto flex justify-between items-center">
-                <!-- Club Logo -->
-                <div class="flex items-center space-x-3">
-                    <a href="#" class="text-[#67E8F9] text-2xl font-extrabold flex items-center">
-                        <!-- Simple SVG for a modern logo placeholder -->
-                        <svg class="w-8 h-8 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
-                        </svg>
-                        Code Forge
-                    </a>
-                </div>
+<body class="flex flex-col min-h-screen">
 
-                <!-- Desktop Navigation Links -->
-                <div class="hidden md:flex space-x-8 items-center">
-                    <a href="{{ url_for('student_registered_events') }}"
-                        class="text-gray-300 hover:text-[#67E8F9] transition duration-300 ease-in-out nav-link-hover">Registered
-                        Events</a>
-                    <a href="{{ url_for('brainstorm') }}"
-                        class="text-gray-300 hover:text-[#67E8F9] transition duration-300 ease-in-out nav-link-hover">Brainstorming
-                        Ideas</a>
-                    <a href="{{ url_for('login') }}"
-                        class="bg-[#EF4444] text-white px-5 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out logout-link-hover shadow-md hover:shadow-[#EF4444]/40">Login</a>
-                </div>
-
-                <!-- Mobile Menu Button (Hamburger) -->
-                <div class="md:hidden">
-                    <button id="mobile-menu-button" class="hamburger-icon focus:outline-none">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Mobile Navigation Links (Hidden by default) -->
-            <div id="mobile-menu" class="mobile-menu md:hidden bg-gray-800 py-4 mt-4 rounded-b-lg">
-                <div class="flex flex-col items-center space-y-4">
-                    <a href="{{ url_for('student_registered_events') }}"
-                        class="block text-gray-300 hover:text-[#67E8F9] transition duration-300 ease-in-out nav-link-hover">Registered
-                        Events</a>
-                    <a href="{{ url_for('brainstorm') }}"
-                        class="block text-gray-300 hover:text-[#67E8F9] transition duration-300 ease-in-out nav-link-hover">Brainstorming
-                        Ideas</a>
-                    <a href="{{ url_for('login') }}"
-                        class="block bg-[#EF4444] text-white px-5 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition duration-300 ease-in-out logout-link-hover shadow-md hover:shadow-[#EF4444]/40 w-max">Login</a>
-                </div>
-            </div>
-        </nav>
-
-    <div class="content-wrapper">
-        <!-- Hero Section -->
-        <section class="py-16 px-4 sm:px-6 lg:px-8 bg-black text-white animate-fade-in">
-            <div class="container mx-auto flex flex-col md:flex-row items-center justify-between gap-10">
-                <div class="md:w-1/2 text-center md:text-left">
-                    <h1 class="text-6xl font-extrabold mb-6 text-[#67E8F9] leading-tight animate-pulse-slow">
-                        Unleash Your Coding Potential
-                    </h1>
-                    <p class="text-xl text-gray-300 mb-8">
-                        Code Forge is your gateway to a vibrant community of innovators, researchers, and tech enthusiasts. Enhance your skills, collaborate on projects, and build the future with us.
-                    </p>
-                    <a href="{{ url_for('login') }}" class="inline-block animate-slide-in-right">
-                        <button class="bg-[#67E8F9] text-gray-900 px-10 py-4 rounded-lg font-bold text-xl hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:shadow-[#67E8F9]/40">
-                            <i class="fas fa-users mr-3"></i> Join Our Community
-                        </button>
-                    </a>
-                </div>
-                <div class="md:w-1/2 flex justify-center md:justify-end">
-                    <!-- Hero image remains static for now, as it's a fixed asset. -->
-                    <img
-                        src="/static/robo.png"
-                        alt="Code Forge Community"
-                        class="hero-image rounded-3xl shadow-2xl transform transition-all duration-300 hover:scale-105 animate-bounce-effect"
-                        onerror="this.onerror=null;this.src='https://placehold.co/600x400/1F2937/67E8F9?text=Image+Error';"
-                    >
-                </div>
-            </div>
-        </section>
-
-        <!-- Upcoming Events Section -->
-        <section class="py-16 px-4 sm:px-6 lg:px-8 bg-black">
-            <div class="container mx-auto">
-                <h2 class="text-5xl font-extrabold text-center mb-12 text-[#67E8F9] leading-tight animate-pulse-slow">
-                    Upcoming Events
-                </h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                    {% if events %}
-                        {% for event in events %}
-                        <div class="bg-gray-900 rounded-xl shadow-lg overflow-hidden border border-gray-800 transition-all duration-300 event-card-hover">
-                            {# Updated to use event[5] which is now event.image_url #}
-                            {% if event[5] %}
-                            <img
-                                src="{{ event[5] }}"
-                                alt="{{ event[1] }} Event Image"
-                                class="w-full h-48 object-cover rounded-t-lg"
-                                onerror="this.onerror=null;this.src='https://placehold.co/600x400/1F2937/67E8F9?text=Image+Error';"
-                            >
-                            {% else %}
-                            <img
-                                src="https://placehold.co/600x400/1F2937/67E8F9?text=Code+Forge"
-                                alt="No Image"
-                                class="w-full h-48 object-cover rounded-t-lg"
-                            >
-                            {% endif %}
-                            <div class="p-6">
-                                <h3 class="text-3xl font-bold text-white mb-2">{{ event[1] }}</h3>
-                                <p class="text-[#EF4444] text-sm mb-4"><i class="fa-regular fa-calendar-days mr-2"></i>  {{ event[3] }}</p>
-                                <p id="short" class="text-gray-300 text-base leading-relaxed mb-6">
-                                    {{ event[4] }}
-                                </p>
-                                <a href="{{ url_for('event_detail', event_id=event[0]) }}" class="block">
-                                    <button class="w-full bg-[#67E8F9] text-gray-900 font-bold py-3 rounded-lg hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:shadow-[#67E8F9]/40">
-                                        Know More
-                                    </button>
-                                </a>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                    <div class="col-span-full text-center text-gray-400 text-lg mt-8">
-                        <p>No events available.</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </section>
-
-        <!-- Brainstorming Banner Section -->
-        <section class="py-16 px-4 sm:px-6 lg:px-8 bg-gray-900 text-white animate-fade-in">
-            <div class="container mx-auto text-center">
-                <h2 class="text-5xl font-extrabold mb-6 text-[#67E8F9] leading-tight animate-pulse-slow">
-                    Spark Your Next Big Idea!
-                </h2>
-                <p class="text-xl text-gray-300 mb-10 max-w-3xl mx-auto">
-                    Collaborate with fellow coders, share innovative concepts, and bring your wildest ideas to life in dedicated brainstorming rooms.
-                </p>
-                <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 mb-12 transform transition-all duration-300 hover:scale-[1.01] hover:shadow-xl">
-                    <h3 class="text-3xl font-bold text-white mb-4">Ready to Innovate?</h3>
-                    <p class="text-lg text-gray-400 mb-6">
-                        It's simple! Just head over to the <span class="text-[#67E8F9] font-semibold">Brainstorming Ideas</span> page, enter a title for your room, and click "Create Room" to start a discussion.
-                    </p>
-                    <a href="{{ url_for('brainstorm') }}" class="inline-block">
-                        <button class="bg-[#EF4444] text-white px-8 py-3 rounded-lg font-bold text-xl hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:shadow-[#EF4444]/40">
-                            <i class="fas fa-lightbulb mr-3"></i> Go to Brainstorming Hub
-                        </button>
-                    </a>
-                </div>
-                <h3 class="text-4xl font-extrabold mb-10 text-[#67E8F9] leading-tight">
-                    Explore Featured Idea Rooms
-                </h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                    <div class="bg-gray-800 p-6 rounded-xl shadow-md border border-gray-700 transition-all duration-300 room-card-hover">
-                        <i class="fas fa-code text-[#67E8F9] text-4xl mb-4"></i>
-                        <h4 class="text-xl font-semibold text-white mb-2">Future of Web Dev</h4>
-                        <p class="text-gray-400 text-sm">Discussing latest frameworks & trends.</p>
-                    </div>
-                    <div class="bg-gray-800 p-6 rounded-xl shadow-md border border-gray-700 transition-all duration-300 room-card-hover">
-                        <i class="fas fa-robot text-[#EF4444] text-4xl mb-4"></i>
-                        <h4 class="text-xl font-semibold text-white mb-2">AI in Everyday Life</h4>
-                        <p class="text-gray-400 text-sm">Exploring practical AI applications.</p>
-                    </div>
-                    <div class="bg-gray-800 p-6 rounded-xl shadow-md border border-gray-700 transition-all duration-300 room-card-hover">
-                        <i class="fas fa-gamepad text-[#67E8F9] text-4xl mb-4"></i>
-                        <h4 class="text-xl font-semibold text-white mb-2">Game Dev Challenges</h4>
-                        <p class="text-gray-400 text-sm">Brainstorming solutions for common hurdles.</p>
-                    </div>
-                    <div class="bg-gray-800 p-6 rounded-xl shadow-md border border-gray-700 transition-all duration-300 room-card-hover">
-                        <i class="fas fa-cloud text-[#EF4444] text-4xl mb-4"></i>
-                        <h4 class="text-xl font-semibold text-white mb-2">Decentralized Apps</h4>
-                        <p class="text-400 text-sm">Dive into blockchain & DApp concepts.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Event Winners Section -->
-        <section class="py-16 px-4 sm:px-6 lg:px-8 bg-black">
-            <div class="container mx-auto">
-                <h3 class="text-5xl font-extrabold text-center mb-12 text-[#67E8F9] leading-tight animate-pulse-slow">
-                    Event Winners
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                    {% if results %}
-                        {% for event, winners in results.items() %}
-                        <div class="bg-gray-900 p-8 rounded-xl shadow-lg border border-gray-800 animate-fade-in">
-                            <strong class="text-3xl font-bold text-white mb-4 block">
-                                {{ event }}
-                            </strong>
-                            <ul class="list-none space-y-3">
-                                {% for winner in winners %}
-                                <li class="flex items-center text-gray-300 text-lg">
-                                    <span class="w-2 h-2 bg-[#67E8F9] rounded-full mr-3 flex-shrink-0"></span>
-                                    <span class="font-semibold text-white">{{ winner[0] }}</span>:
-                                    <span class="ml-1 text-gray-400">{{ winner[1] }}</span>
-                                    {% if winner[2] %}
-                                    <span class="text-gray-500 ml-1">({{ winner[2] }})</span>
-                                    {% endif %}
-                                </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                    <div class="col-span-full text-center text-gray-400 text-lg mt-8">
-                        <p>No winners announced yet.</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </section>
-
-        <!-- Donation Banner Section -->
-        <section class="py-16 px-4 sm:px-6 lg:px-8 bg-gray-900 text-white animate-fade-in">
-            <div class="container mx-auto text-center">
-                <h2 class="text-5xl font-extrabold mb-6 text-[#67E8F9] leading-tight animate-pulse-slow">
-                    Support Our Vision!
-                </h2>
-                <p class="text-xl text-gray-300 mb-10 max-w-3xl mx-auto">
-                    "The best way to predict the future is to create it. Your contribution fuels our innovation and empowers the next generation of coders."
-                </p>
-                <div class="bg-gray-800 p-6 rounded-xl shadow-lg mb-12 transform transition-all duration-300 hover:scale-[1.01] hover:shadow-xl">
-                    <h3 class="text-3xl font-bold text-white mb-4">Make a Difference Today!</h3>
-                    <p class="text-lg text-gray-400 mb-6">
-                        Every contribution, big or small, helps us organize more events, provide better resources, and foster a thriving coding community.
-                    </p>
-                    <button
-                        id="donateButton"
-                        class="bg-[#EF4444] text-white px-8 py-3 rounded-lg font-bold text-xl hover:bg-opacity-90 transition duration-300 ease-in-out button-hover-animation shadow-lg hover:shadow-[#EF4444]/40"
-                    >
-                        <i class="fas fa-heart mr-3"></i> Donate Now
-                    </button>
-                    <div id="qrCodeContainer" class="mt-8 qr-code-hidden flex flex-col items-center">
-                        <p class="text-gray-300 text-lg mb-4">Scan to Donate:</p>
-                        <img
-                            src="https://placehold.co/200x200/1F2937/67E8F9?text=QR+Code"
-                            alt="Donation QR Code"
-                            class="max-w-xs h-auto rounded-lg shadow-xl"
-                            onerror="this.onerror=null;this.src='https://placehold.co/200x200/1F2937/EF4444?text=QR+Error';"
-                        >
-                        <p class="text-gray-400 text-sm mt-4">Thank you for your generosity!</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- About Us Section -->
-        <section class="py-16 px-4 sm:px-6 lg:px-8 bg-black animate-fade-in">
-            <div class="container mx-auto text-center max-w-4xl">
-                <h2 class="text-5xl font-extrabold mb-6 text-[#67E8F9] leading-tight animate-pulse-slow">
-                    About Code Forge
-                </h2>
-                <p class="text-xl text-gray-300 mb-10">
-                    Code Forge is a dynamic coding and innovation-focused technical club dedicated to enhancing coding culture and nurturing student-led initiatives.
-                </p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-                    <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
-                        <i class="fas fa-eye text-[#EF4444] text-5xl mb-4"></i>
-                        <h3 class="text-3xl font-bold text-white mb-4">Our Vision</h3>
-                        <p class="text-lg text-gray-400">
-                            To foster a competitive and creative coding culture that empowers students to become innovators and researchers, shaping the future of technology.
+    <!-- ========== HEADER ========== -->
+    <header class="flex flex-wrap md:justify-start md:flex-nowrap z-50 w-full text-sm py-4 bg-slate-900/60 backdrop-blur-md sticky top-0">
+      <nav class="max-w-[85rem] w-full mx-auto px-4 flex items-center justify-between" aria-label="Global">
+        <a class="flex-none flex items-center gap-2" href="{{ url_for('home') }}">
+          <img src="{{ url_for('static', filename='Logo.png') }}" alt="Code Forge Logo" class="h-10 w-auto">
+          <span class="text-2xl font-extrabold text-white">Code Forge</span>
+        </a>
+        <div class="md:hidden">
+          <button type="button" id="navbar-toggle" class="hs-collapse-toggle p-2 inline-flex justify-center items-center gap-2 rounded-lg border border-gray-700 font-medium bg-gray-800 text-gray-400 shadow-sm hover:bg-gray-700" data-hs-collapse="#navbar-collapse" aria-controls="navbar-collapse" aria-label="Toggle navigation">
+            <i class="fa-solid fa-bars hs-collapse-open:hidden"></i>
+            <i class="fa-solid fa-xmark hs-collapse-open:block hidden"></i>
+          </button>
+        </div>
+        <div id="navbar-collapse" class="hs-collapse hidden overflow-hidden transition-all duration-300 basis-full grow md:block md:w-auto md:basis-auto md:order-2">
+          <div class="flex flex-col gap-5 mt-5 md:flex-row md:items-center md:justify-end md:mt-0 md:pl-5">
+            <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('home') }}">Home</a>
+            {% if session['user'] %}
+                <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('student_registered_events') }}">Registered Events</a>
+                <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('brainstorm') }}">Brainstorm</a>
+                <a class="inline-block bg-red-500 text-white font-bold px-6 py-3 rounded-lg shadow-lg shadow-red-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-red-500/50 text-sm" href="{{ url_for('logout') }}">Logout</a>
+            {% else %}
+                <a class="inline-block bg-cyan-400 text-slate-900 font-bold px-6 py-3 rounded-lg shadow-lg shadow-cyan-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-cyan-500/50 text-sm" href="{{ url_for('login') }}">Login</a>
+            {% endif %}
+          </div>
+        </div>
+      </nav>
+    </header>
+    <!-- ========== END HEADER ========== -->
+    
+    <!-- Flex-grow container to push footer down -->
+    <main class="flex-grow">
+        
+        <!-- ========== HERO SECTION ========== -->
+        <div class="relative overflow-hidden py-20">
+            <div class="max-w-[85rem] mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center">
+                    <div>
+                        <p class="inline-block text-sm font-medium bg-clip-text text-transparent bg-gradient-to-l from-red-500 to-cyan-400" data-aos="fade-up">
+                            CODE · COLLABORATE · CREATE
                         </p>
-                    </div>
-                    <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
-                        <i class="fas fa-rocket text-[#67E8F9] text-5xl mb-4"></i>
-                        <h3 class="text-3xl font-bold text-white mb-4">Our Mission</h3>
-                        <p class="text-lg text-gray-400">
-                            To engage students in structured learning through coding challenges, workshops, and collaborative projects, culminating in the launch of startup prototypes or the submission of Q1-level research papers.
+                        <h1 class="block text-3xl font-bold text-gray-200 sm:text-4xl lg:text-6xl lg:leading-tight mt-2" data-aos="fade-up" data-aos-delay="100">
+                            Unleash Your Coding Potential
+                        </h1>
+                        <p class="mt-3 text-lg text-gray-400" data-aos="fade-up" data-aos-delay="200">
+                            Code Forge is your gateway to a vibrant community of innovators, researchers, and tech enthusiasts.
                         </p>
+                        <div class="mt-7 grid gap-3 w-full sm:inline-flex" data-aos="fade-up" data-aos-delay="300">
+                            <a class="inline-block bg-cyan-400 text-slate-900 font-bold px-6 py-3 rounded-lg shadow-lg shadow-cyan-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-cyan-500/50" href="{{ url_for('login') }}">
+                                Join Our Community <i class="fas fa-arrow-right ml-2"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="relative ml-4" data-aos="zoom-in-left" data-aos-delay="400">
+                        <img class="w-full rounded-md" src="{{ url_for('static', filename='robo.png') }}" alt="Code Forge Robot Mascot">
+                        <div class="absolute inset-0 -z-10 bg-gradient-to-tr from-gray-900 via-slate-800/0 to-slate-900 w-full h-full rounded-md mt-4 -mb-4 mr-4 -ml-4 lg:mt-6 lg:-mb-6 lg:mr-6 lg:-ml-6"></div>
                     </div>
                 </div>
-                <p class="text-lg text-gray-400 max-w-2xl mx-auto">
-                    We aim to build real-world tech skills, foster an innovation and research mindset, and position our department as a hub of coding and startup excellence.
-                </p>
             </div>
-        </section>
-    </div>
+             <!-- Animated Background Blobs -->
+             <div class="absolute -top-48 -left-48 w-96 h-96 bg-cyan-400/20 rounded-full filter blur-3xl -z-10 animate-pulse"></div>
+             <div class="absolute -bottom-48 -right-48 w-96 h-96 bg-red-500/20 rounded-full filter blur-3xl -z-10 animate-pulse-slow"></div>
+        </div>
+        <!-- ========== END HERO SECTION ========== -->
 
-    <!-- Footer Section -->
-    <footer class="bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 text-gray-400 border-t border-gray-800">
-        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center text-center md:text-left space-y-8 md:space-y-0">
-            <div class="flex flex-col items-center md:items-start">
-                <a href="#" class="text-[#67E8F9] text-3xl font-extrabold tracking-wide mb-2">Code Forge</a>
-                <p class="text-sm">Innovating the future, one line of code at a time.</p>
+
+        <!-- ========== UPCOMING EVENTS ========== -->
+        <div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
+          <div class="max-w-2xl mx-auto text-center mb-10 lg:mb-14" data-aos="fade-up">
+            <h2 class="text-3xl font-bold md:text-4xl md:leading-tight text-white">Upcoming Events</h2>
+            <p class="mt-1 text-gray-400">Discover the latest workshops, hackathons, and tech talks.</p>
+          </div>
+
+          <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% if events %}
+              {% for event in events %}
+              <div class="group flex flex-col h-full glass-card rounded-xl p-5 transition-all duration-300 hover:border-cyan-400" href="#" data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}">
+                <div class="aspect-w-16 aspect-h-9">
+                    <img class="w-full object-cover rounded-xl" src="{{ event.image_url or 'https://placehold.co/600x400/050816/FFFFFF?text=Event' }}" alt="{{ event.title }}">
+                </div>
+                <div class="my-6">
+                    <h3 class="text-xl font-semibold text-white">
+                        {{ event.title }}
+                    </h3>
+                    <p class="mt-2 text-sm text-red-400 font-semibold">{{ event.date.strftime('%B %d, %Y') }}</p>
+                    <p class="mt-5 text-gray-400">
+                        {{ event.short_description }}
+                    </p>
+                </div>
+                <div class="mt-auto">
+                    <a href="{{ url_for('event_detail', event_id=event.id) }}" class="inline-block w-full text-center bg-cyan-400 text-slate-900 font-bold px-6 py-3 rounded-lg shadow-lg shadow-cyan-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-cyan-500/50">Know More</a>
+                </div>
+              </div>
+              {% endfor %}
+            {% else %}
+            <div class="col-span-full text-center text-gray-500 py-10">
+                <p>No upcoming events at the moment. Stay tuned!</p>
             </div>
-            <div class="flex flex-col items-center md:items-start space-y-2">
-                <h4 class="text-lg font-semibold text-white mb-2">Quick Links</h4>
-                <a href="#" class="hover:text-[#67E8F9] transition duration-200">Upcoming Events</a>
-                <a href="#" class="hover:text-[#67E8F9] transition duration-200">Brainstorming Ideas</a>
-                <a href="#" class="hover:text-[#67E8F9] transition duration-200">My Profile</a>
-                <a href="#" class="hover:text-[#67E8F9] transition duration-200">About Us</a>
-            </div>
-            <div class="flex flex-col items-center md:items-start">
-                <h4 class="text-lg font-semibold text-white mb-2">Connect With Us</h4>
-                <div class="flex space-x-6">
-                    <a href="#" class="text-gray-400 text-2xl icon-hover transition duration-300">
-                        <i class="fab fa-facebook"></i>
-                    </a>
-                    <a href="#" class="text-gray-400 text-2xl icon-hover transition duration-300">
-                        <i class="fab fa-twitter"></i>
-                    </a>
-                    <a href="#" class="text-gray-400 text-2xl icon-hover transition duration-300">
-                        <i class="fab fa-instagram"></i>
-                    </a>
-                    <a href="#" class="text-gray-400 text-2xl icon-hover transition duration-300">
-                        <i class="fab fa-linkedin"></i>
-                    </a>
-                    <a href="#" class="text-gray-400 text-2xl icon-hover transition duration-300">
-                        <i class="fab fa-github"></i>
+            {% endif %}
+          </div>
+        </div>
+        <!-- ========== END UPCOMING EVENTS ========== -->
+
+        <!-- ========== BRAINSTORMING BANNER ========== -->
+        <div class="bg-slate-900/80">
+            <div class="max-w-6xl px-4 py-10 sm:px-6 lg:px-8 lg:py-16 mx-auto">
+                <div class="max-w-xl mx-auto text-center" data-aos="zoom-in">
+                    <h2 class="text-3xl font-bold md:text-4xl text-white">Spark Your Next Big Idea</h2>
+                    <p class="mt-2 text-gray-400">Collaborate with peers, share innovative concepts, and bring your wildest ideas to life in our brainstorming rooms.</p>
+                    <a class="mt-6 inline-block bg-red-500 text-white font-bold px-6 py-3 rounded-lg shadow-lg shadow-red-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-red-500/50" href="{{ url_for('brainstorm') }}">
+                        Go to Brainstorm Hub <i class="fas fa-lightbulb ml-2"></i>
                     </a>
                 </div>
             </div>
         </div>
-        <div class="container mx-auto mt-10 pt-8 border-t border-gray-800 text-center text-sm text-gray-500">
-            &copy; 2025 Code Forge Club. All rights reserved.
+        <!-- ========== END BRAINSTORMING BANNER ========== -->
+
+
+        <!-- ========== WINNERS SECTION ========== -->
+        <div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
+            <div class="max-w-2xl mx-auto text-center mb-10 lg:mb-14" data-aos="fade-up">
+                <h2 class="text-3xl font-bold md:text-4xl md:leading-tight text-white">Hall of Fame</h2>
+                <p class="mt-1 text-gray-400">Celebrating the champions of our past events.</p>
+            </div>
+            
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% if results %}
+                {% for event_title, winners in results.items() %}
+                <div class="group flex flex-col h-full glass-card rounded-xl p-6" data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}">
+                    <div class="text-center">
+                        <i class="fa-solid fa-trophy text-5xl text-yellow-400"></i>
+                        <h3 class="text-2xl font-bold text-white mt-4">{{ event_title }}</h3>
+                    </div>
+                    <ul class="mt-6 space-y-3">
+                        {% for winner in winners %}
+                        <li class="flex items-center gap-x-3">
+                            <span class="text-lg font-bold text-cyan-400">{{ winner[1] }}</span>
+                            <span class="text-gray-300">{{ winner[0] }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-span-full text-center text-gray-500 py-10">
+                    <p>Winners from recent events will be announced here soon!</p>
+                </div>
+            {% endif %}
+            </div>
+        </div>
+        <!-- ========== END WINNERS SECTION ========== -->
+
+        <!-- ========== DONATION BANNER ========== -->
+        <div class="bg-slate-900/80">
+            <div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
+                <div class="max-w-2xl mx-auto text-center" data-aos="fade-up">
+                    <h2 class="text-3xl font-bold md:text-4xl md:leading-tight text-white">Support Our Vision</h2>
+                    <p class="mt-1 text-gray-400">Your contribution fuels our innovation and empowers the next generation of coders.</p>
+                </div>
+
+                <div class="mt-10 max-w-2xl mx-auto glass-card p-6 rounded-2xl" data-aos="fade-up" data-aos-delay="200">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-white">Make a Difference Today!</h3>
+                        <p class="text-sm text-gray-400 mt-1">Every contribution helps us organize more events and provide better resources.</p>
+                        <button id="donateButton" class="mt-5 inline-block bg-red-500 text-white font-bold px-6 py-3 rounded-lg shadow-lg shadow-red-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-red-500/50">
+                            <i class="fas fa-heart mr-2"></i> Donate Now
+                        </button>
+                    </div>
+                    
+                    <div id="qrCodeContainer" class="qr-code-container text-center mt-4">
+                        <div class="inline-block p-4 bg-white rounded-lg">
+                            <img src="https://placehold.co/200x200/050816/FFFFFF?text=QR+Code" alt="Donation QR Code" class="w-40 h-40">
+                        </div>
+                        <p class="text-gray-400 text-xs mt-2">Scan to contribute. Thank you!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ========== END DONATION BANNER ========== -->
+
+        <!-- ========== ABOUT US SECTION ========== -->
+        <div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
+            <div class="max-w-2xl mx-auto text-center mb-10 lg:mb-14" data-aos="fade-up">
+                <h2 class="text-3xl font-bold md:text-4xl md:leading-tight text-white">About Code Forge</h2>
+                <p class="mt-1 text-gray-400">A dynamic coding and innovation-focused technical club dedicated to enhancing coding culture and nurturing student-led initiatives.</p>
+            </div>
+
+            <div class="grid sm:grid-cols-2 lg:grid-cols-2 gap-6 items-center">
+                <div class="group flex flex-col h-full text-center glass-card rounded-xl p-8" data-aos="fade-up" data-aos-delay="100">
+                    <i class="fas fa-eye text-5xl text-cyan-400 mx-auto"></i>
+                    <h3 class="text-2xl font-bold text-white mt-4">Our Vision</h3>
+                    <p class="mt-3 text-gray-400">
+                        To foster a competitive and creative coding culture that empowers students to become innovators and researchers, shaping the future of technology.
+                    </p>
+                </div>
+
+                <div class="group flex flex-col h-full text-center glass-card rounded-xl p-8" data-aos="fade-up" data-aos-delay="200">
+                    <i class="fas fa-rocket text-5xl text-red-400 mx-auto"></i>
+                    <h3 class="text-2xl font-bold text-white mt-4">Our Mission</h3>
+                    <p class="mt-3 text-gray-400">
+                        To engage students in structured learning through coding challenges, workshops, and collaborative projects, culminating in the launch of startup prototypes or research papers.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <!-- ========== END ABOUT US SECTION ========== -->
+
+    </main>
+
+    <!-- ========== FOOTER ========== -->
+    <footer class="bg-slate-900/80 mt-20">
+        <div class="max-w-[85rem] py-10 px-4 sm:px-6 lg:px-8 mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 items-center gap-6">
+                <div class="col-span-1 lg:col-span-2 flex flex-col items-center md:items-start">
+                    <a class="flex-none flex items-center gap-2" href="{{ url_for('home') }}">
+                      <img src="{{ url_for('static', filename='Logo.png') }}" alt="Code Forge Logo" class="h-10 w-auto">
+                      <span class="text-2xl font-extrabold text-white">Code Forge</span>
+                    </a>
+                    <p class="text-xs text-slate-400 sm:text-sm mt-3">© 2025 Code Forge. All rights reserved.</p>
+                </div>
+                
+                <div>
+                  <h4 class="text-lg font-semibold text-gray-200">Quick Links</h4>
+                  <div class="mt-3 grid space-y-3 text-sm">
+                    <p><a class="inline-flex gap-x-2 text-gray-400 hover:text-cyan-400" href="#">Events</a></p>
+                    <p><a class="inline-flex gap-x-2 text-gray-400 hover:text-cyan-400" href="#">About Us</a></p>
+                  </div>
+                </div>
+
+                <div>
+                    <h4 class="text-lg font-semibold text-gray-200">Connect</h4>
+                    <div class="mt-3 flex gap-x-4">
+                        <a class="w-10 h-10 inline-flex justify-center items-center gap-2 text-lg font-medium text-gray-400 rounded-full hover:bg-cyan-500 hover:text-white transition" href="#">
+                           <i class="fab fa-github"></i>
+                        </a>
+                         <a class="w-10 h-10 inline-flex justify-center items-center gap-2 text-lg font-medium text-gray-400 rounded-full hover:bg-blue-600 hover:text-white transition" href="#">
+                           <i class="fab fa-linkedin"></i>
+                        </a>
+                        <a class="w-10 h-10 inline-flex justify-center items-center gap-2 text-lg font-medium text-gray-400 rounded-full hover:bg-pink-600 hover:text-white transition" href="#">
+                           <i class="fab fa-instagram"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </footer>
-
+    <!-- ========== END FOOTER ========== -->
+    
+    <!-- Preline UI for Mobile Nav -->
+    <script src="https://cdn.jsdelivr.net/npm/preline@2.3.0/dist/preline.min.js"></script>
+    
+    <!-- AOS (Animate On Scroll) JS -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // JavaScript for mobile menu toggle
-        const mobileMenuButton = document.getElementById('mobile-menu-button');
-        const mobileMenu = document.getElementById('mobile-menu');
+      // Initialize AOS
+      AOS.init({
+        duration: 800,
+        once: true,
+      });
 
-        mobileMenuButton.addEventListener('click', () => {
-            mobileMenu.classList.toggle('open');
-            mobileMenuButton.classList.toggle('open');
+      document.addEventListener('DOMContentLoaded', () => {
+        // Manual handling for Preline UI navbar toggle
+        const navbarToggle = document.getElementById('navbar-toggle');
+        navbarToggle.addEventListener('click', () => {
+            const icons = navbarToggle.querySelectorAll('i');
+            icons.forEach(icon => icon.classList.toggle('hidden'));
         });
-            // Donation Button Logic
-            const donateButton = document.getElementById('donateButton');
-            const qrCodeContainer = document.getElementById('qrCodeContainer');
 
-            if (donateButton && qrCodeContainer) {
-                donateButton.addEventListener('click', () => {
-                    if (qrCodeContainer.classList.contains('qr-code-hidden')) {
-                        qrCodeContainer.classList.remove('qr-code-hidden');
-                        qrCodeContainer.classList.add('qr-code-visible');
-                    } else {
-                        qrCodeContainer.classList.remove('qr-code-visible');
-                        qrCodeContainer.classList.add('qr-code-hidden');
-                    }
-                });
-            }
-        });
+        // Donation Button Logic
+        const donateButton = document.getElementById('donateButton');
+        const qrCodeContainer = document.getElementById('qrCodeContainer');
+        if (donateButton && qrCodeContainer) {
+            donateButton.addEventListener('click', () => {
+                qrCodeContainer.classList.toggle('visible');
+            });
+        }
+      });
     </script>
 </body>
 </html>
