@@ -60,8 +60,9 @@
     <!-- ========== HEADER ========== -->
     <header class="flex flex-wrap md:justify-start md:flex-nowrap z-50 w-full text-sm py-4 bg-slate-900/60 backdrop-blur-md sticky top-0">
       <nav class="max-w-[85rem] w-full mx-auto px-4 flex items-center justify-between" aria-label="Global">
-        <img src="{{ url_for('static', filename='Logo.png') }}" alt="Code Forge Logo" class="h-10 w-auto">
-        
+        <div class="flex-none flex items-center gap-2">
+          <img src="{{ url_for('static', filename='Logo.png') }}" alt="Code Forge Logo" class="h-10 w-auto">
+        </div>
         <div class="md:hidden">
           <button type="button" id="navbar-toggle" class="hs-collapse-toggle p-2 inline-flex justify-center items-center gap-2 rounded-lg border border-gray-700 font-medium bg-gray-800 text-gray-400 shadow-sm hover:bg-gray-700" data-hs-collapse="#navbar-collapse" aria-controls="navbar-collapse" aria-label="Toggle navigation">
             <i class="fa-solid fa-bars hs-collapse-open:block"></i>
@@ -70,6 +71,7 @@
         </div>
         <div id="navbar-collapse" class="hs-collapse hidden overflow-hidden transition-all duration-300 basis-full grow md:block md:w-auto md:basis-auto md:order-2">
           <div class="flex flex-col gap-5 mt-5 md:flex-row md:items-center md:justify-end md:mt-0 md:pl-5">
+            <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('home') }}">Home</a>
             {% if session['user'] %}
                 <a class="font-medium text-cyan-400" href="{{ url_for('dashboard') }}" aria-current="page">Dashboard</a>
                 <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('student_registered_events') }}">Registered Events</a>
@@ -201,11 +203,19 @@
                         <i class="fa-solid fa-trophy text-5xl text-yellow-400"></i>
                         <h3 class="text-2xl font-bold text-white mt-4">{{ event_title }}</h3>
                     </div>
-                    <ul class="mt-6 space-y-3">
+                    <ul class="mt-6 space-y-4">
                         {% for winner in winners %}
-                        <li class="flex items-center gap-x-3">
-                            <span class="text-lg font-bold text-cyan-400">{{ winner[1] }}</span>
-                            <span class="text-gray-300">{{ winner[0] }}</span>
+                        <li>
+                            {% if '1' in winner[0] %}
+                                <p class="text-lg font-bold text-yellow-400">Winner</p>
+                            {% elif '2' in winner[0] %}
+                                <p class="text-lg font-bold text-gray-300">Runner-up</p>
+                            {% elif '3' in winner[0] %}
+                                <p class="text-lg font-bold text-orange-400">2nd Runner-up</p>
+                            {% else %}
+                                <p class="text-lg font-bold text-cyan-400">{{ winner[0] }}</p>
+                            {% endif %}
+                            <p class="text-gray-300">{{ winner[1] }}</p>
                         </li>
                         {% endfor %}
                     </ul>
@@ -281,8 +291,9 @@
         <div class="max-w-[85rem] py-10 px-4 sm:px-6 lg:px-8 mx-auto">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 items-center gap-6">
                 <div class="col-span-1 lg:col-span-2 flex flex-col items-center md:items-start">
-                    <img src="{{ url_for('static', filename='Logo.png') }}" alt="Code Forge Logo" class="h-10 w-auto">
-
+                    <div class="flex-none flex items-center gap-2">
+                      <img src="{{ url_for('static', filename='Logo.png') }}" alt="Code Forge Logo" class="h-10 w-auto">
+                    </div>
                     <p class="text-xs text-slate-400 sm:text-sm mt-3">© 2025 Code Forge. All rights reserved.</p>
                 </div>
                 
