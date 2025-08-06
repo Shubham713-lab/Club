@@ -59,7 +59,7 @@
     <!-- ========== HEADER ========== -->
     <header class="flex flex-wrap md:justify-start md:flex-nowrap z-50 w-full text-sm py-4 bg-slate-900/60 backdrop-blur-md sticky top-0">
       <nav class="max-w-[85rem] w-full mx-auto px-4 flex items-center justify-between" aria-label="Global">
-        <a class="flex-none flex items-center gap-2" href="{{ url_for('dashboard') }}">
+        <a class="flex-none flex items-center gap-2" href="{{ url_for('student_dashboard') }}">
           <img src="{{ url_for('static', filename='Logo.png') }}" alt="Code Forge Logo" class="h-10 w-auto">
         </a>
         <div class="md:hidden">
@@ -193,7 +193,7 @@
         <div class="max-w-[85rem] py-10 px-4 sm:px-6 lg:px-8 mx-auto">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 items-center gap-6">
                 <div class="col-span-1 lg:col-span-2 flex flex-col items-center md:items-start">
-                    <a class="flex-none flex items-center gap-2" href="{{ url_for('dashboard') }}">
+                    <a class="flex-none flex items-center gap-2" href="{{ url_for('student_dashboard') }}">
                       <img src="{{ url_for('static', filename='Logo.png') }}" alt="Code Forge Logo" class="h-10 w-auto">
                     </a>
                     <p class="text-xs text-slate-400 sm:text-sm mt-3">© 2025 Code Forge. All rights reserved.</p>
