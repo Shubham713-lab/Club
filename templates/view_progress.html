@@ -48,9 +48,8 @@
     <!-- ========== HEADER ========== -->
     <header class="flex flex-wrap md:justify-start md:flex-nowrap z-50 w-full text-sm py-4 bg-slate-900/60 backdrop-blur-md sticky top-0">
       <nav class="max-w-[85rem] w-full mx-auto px-4 flex items-center justify-between" aria-label="Global">
-        <a class="flex-none flex items-center gap-2" href="{{ url_for('home') }}">
+        <a class="flex-none flex items-center gap-2" href="#">
           <img src="{{ url_for('static', filename='Logo.png') }}" alt="Code Forge Logo" class="h-10 w-auto">
-          <span class="text-2xl font-extrabold text-white">Code Forge Admin</span>
         </a>
         <div class="md:hidden">
           <button type="button" id="navbar-toggle" class="hs-collapse-toggle p-2 inline-flex justify-center items-center gap-2 rounded-lg border border-gray-700 font-medium bg-gray-800 text-gray-400 shadow-sm hover:bg-gray-700" data-hs-collapse="#navbar-collapse" aria-controls="navbar-collapse" aria-label="Toggle navigation">
@@ -60,7 +59,9 @@
         </div>
         <div id="navbar-collapse" class="hs-collapse hidden overflow-hidden transition-all duration-300 basis-full grow md:block md:w-auto md:basis-auto md:order-2">
           <div class="flex flex-col gap-5 mt-5 md:flex-row md:items-center md:justify-end md:mt-0 md:pl-5">
+            {% if session['role'] == 'admin' %}
             <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('view_all_users') }}">View Users</a>
+            {% endif %}
             <a class="inline-block bg-red-500 text-white font-bold px-6 py-3 rounded-lg shadow-lg shadow-red-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-red-500/50 text-sm" href="{{ url_for('logout') }}">Logout</a>
           </div>
         </div>
@@ -128,9 +129,8 @@
         <div class="max-w-[85rem] py-10 px-4 sm:px-6 lg:px-8 mx-auto">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 items-center gap-6">
                 <div class="col-span-1 lg:col-span-2 flex flex-col items-center md:items-start">
-                    <a class="flex-none flex items-center gap-2" href="{{ url_for('home') }}">
+                    <a class="flex-none flex items-center gap-2" href="#">
                       <img src="{{ url_for('static', filename='Logo.png') }}" alt="Code Forge Logo" class="h-10 w-auto">
-                      <span class="text-2xl font-extrabold text-white">Code Forge</span>
                     </a>
                     <p class="text-xs text-slate-400 sm:text-sm mt-3">© 2025 Code Forge. All rights reserved.</p>
                 </div>
