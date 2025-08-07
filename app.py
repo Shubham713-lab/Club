@@ -587,7 +587,7 @@ def mentor_dashboard():
 
     events_for_template = []
     rooms = []
-    processed_results = defaultdict(list)
+    grouped_results = {}
 
     try:
         # Get all events with full description and image URL
@@ -638,7 +638,9 @@ def mentor_dashboard():
             event_title = result_row['event_title']
             position = result_row['position']
             winner_name = result_row['winner_name']
-            processed_results[event_title].append([winner_name, position, ""])
+            if event_title not in grouped_results:
+                grouped_results[event_title] = []
+            grouped_results[event_title].append((position, winner_name))
 
     except psycopg2.Error as e:
         flash(f"Database error on mentor dashboard: {e}", "danger")
@@ -650,7 +652,7 @@ def mentor_dashboard():
     return render_template('mentor_dashboard.html',
                            events=events_for_template,
                            brainstorm_rooms=rooms,
-                           results=dict(processed_results),
+                           results=grouped_results,
                            role=session.get('role'))
 
 
@@ -1111,7 +1113,7 @@ def student_dashboard():
 
         # CORRECTED: Fetch winner_email as well to match the template
         cur.execute('''
-            SELECT event_title, position, winner_name, winner_email
+            SELECT event_title, position, winner_name
             FROM event_results
             ORDER BY event_title,
                      CASE 
@@ -1127,10 +1129,9 @@ def student_dashboard():
             event_title = result_row['event_title']
             position = result_row['position']
             name = result_row['winner_name']
-            email = result_row.get('winner_email', '') # Use .get() for safety
             if event_title not in grouped_results:
                 grouped_results[event_title] = []
-            grouped_results[event_title].append((position, name, email))
+            grouped_results[event_title].append((position, name))
 
     except psycopg2.Error as e:
         flash(f"Database error on student dashboard: {e}", "danger")

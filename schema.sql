@@ -31,14 +31,15 @@ CREATE TABLE IF NOT EXISTS mentors (
     password VARCHAR(255) NOT NULL
 );
 
+
 -- events table
 CREATE TABLE IF NOT EXISTS events (
-    id SERIAL PRIMARY KEY, -- SERIAL automatically increments (like AUTOINCREMENT in SQLite)
+    id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     description TEXT,
-    date DATE, -- Or TIMESTAMP if you need time
+    date DATE,
     short_description TEXT,
-    image_path VARCHAR(255)
+    image_url VARCHAR(255) -- Corrected column name
 );
 
 -- event_stages table
@@ -65,9 +66,9 @@ CREATE TABLE IF NOT EXISTS submissions (
     event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
     stage_id INTEGER NOT NULL REFERENCES event_stages(id) ON DELETE CASCADE,
     submission_text TEXT,
-    submission_file VARCHAR(255),
+    submission_file_url VARCHAR(255), -- Corrected column name
     submitted_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(user_id, event_id, stage_id) -- A user can only submit once per stage per event
+    UNIQUE(user_id, event_id, stage_id)
 );
 
 -- brainstorm_rooms table
@@ -101,9 +102,9 @@ CREATE TABLE IF NOT EXISTS brainstorm_room_files (
 CREATE TABLE IF NOT EXISTS event_results (
     id SERIAL PRIMARY KEY,
     event_title VARCHAR(255) NOT NULL,
-    position VARCHAR(50) NOT NULL, -- e.g., '1st', '2nd', '3rd'
+    position VARCHAR(50) NOT NULL,
     winner_name VARCHAR(255) NOT NULL,
-    winner_email VARCHAR(255) NOT NULL,
+    -- Removed winner_email to match the simplified form
     announced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
