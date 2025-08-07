@@ -65,17 +65,15 @@
         </a>
         <div class="md:hidden">
           <button type="button" id="navbar-toggle" class="hs-collapse-toggle p-2 inline-flex justify-center items-center gap-2 rounded-lg border border-gray-700 font-medium bg-gray-800 text-gray-400 shadow-sm hover:bg-gray-700" data-hs-collapse="#navbar-collapse" aria-controls="navbar-collapse" aria-label="Toggle navigation">
-            <i class="fa-solid fa-bars hs-collapse-open:hidden"></i>
-            <i class="fa-solid fa-xmark hs-collapse-open:block hidden"></i>
+            <i class="fa-solid fa-bars hs-collapse-open:block"></i>
+            <i class="fa-solid fa-xmark hs-collapse-open:hidden"></i>
           </button>
         </div>
         <div id="navbar-collapse" class="hs-collapse hidden overflow-hidden transition-all duration-300 basis-full grow md:block md:w-auto md:basis-auto md:order-2">
           <div class="flex flex-col gap-5 mt-5 md:flex-row md:items-center md:justify-end md:mt-0 md:pl-5">
-            <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('home') }}">Home</a>
+            <a class="font-medium text-cyan-400" href="{{ url_for('home') }}" aria-current="page">Home</a>
             {% if session['user'] %}
                 <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('dashboard') }}">Dashboard</a>
-                <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('student_registered_events') }}">Registered Events</a>
-                <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('brainstorm') }}">Brainstorm</a>
                 <a class="inline-block bg-red-500 text-white font-bold px-6 py-3 rounded-lg shadow-lg shadow-red-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-red-500/50 text-sm" href="{{ url_for('logout') }}">Logout</a>
             {% else %}
                 <a class="inline-block bg-cyan-400 text-slate-900 font-bold px-6 py-3 rounded-lg shadow-lg shadow-cyan-500/30 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-cyan-500/50 text-sm" href="{{ url_for('login') }}">Login</a>
@@ -123,7 +121,7 @@
 
 
         <!-- ========== UPCOMING EVENTS ========== -->
-        <div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
+        <div id="events" class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
           <div class="max-w-2xl mx-auto text-center mb-10 lg:mb-14" data-aos="fade-up">
             <h2 class="text-3xl font-bold md:text-4xl md:leading-tight text-white">Upcoming Events</h2>
             <p class="mt-1 text-gray-400">Discover the latest workshops, hackathons, and tech talks.</p>
@@ -173,7 +171,6 @@
         </div>
         <!-- ========== END BRAINSTORMING BANNER ========== -->
 
-
         <!-- ========== WINNERS SECTION ========== -->
         <div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
             <div class="max-w-2xl mx-auto text-center mb-10 lg:mb-14" data-aos="fade-up">
@@ -195,9 +192,9 @@
                             {% if '1' in winner[0] %}
                                 <p class="text-lg font-bold text-yellow-400">Winner</p>
                             {% elif '2' in winner[0] %}
-                                <p class="text-lg font-bold text-yellow-300">Runner-up</p>
+                                <p class="text-lg font-bold text-gray-300">Runner-up</p>
                             {% elif '3' in winner[0] %}
-                                <p class="text-lg font-bold text-yellow-400">2nd Runner-up</p>
+                                <p class="text-lg font-bold text-orange-400">2nd Runner-up</p>
                             {% else %}
                                 <p class="text-lg font-bold text-cyan-400">{{ winner[0] }}</p>
                             {% endif %}
@@ -245,7 +242,7 @@
         <!-- ========== END DONATION BANNER ========== -->
 
         <!-- ========== ABOUT US SECTION ========== -->
-        <div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
+        <div id="about" class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
             <div class="max-w-2xl mx-auto text-center mb-10 lg:mb-14" data-aos="fade-up">
                 <h2 class="text-3xl font-bold md:text-4xl md:leading-tight text-white">About Code Forge</h2>
                 <p class="mt-1 text-gray-400">A dynamic coding and innovation-focused technical club dedicated to enhancing coding culture and nurturing student-led initiatives.</p>
@@ -287,8 +284,8 @@
                 <div>
                   <h4 class="text-lg font-semibold text-gray-200">Quick Links</h4>
                   <div class="mt-3 grid space-y-3 text-sm">
-                    <p><a class="inline-flex gap-x-2 text-gray-400 hover:text-cyan-400" href="{{ url_for('student_registered_events') }}">Registered Events</a></p>
-                    <p><a class="inline-flex gap-x-2 text-gray-400 hover:text-cyan-400" href="{{ url_for('brainstorm') }}">Brainstorm Ideas</a></p>
+                    <p><a class="inline-flex gap-x-2 text-gray-400 hover:text-cyan-400" href="#events">Events</a></p>
+                    <p><a class="inline-flex gap-x-2 text-gray-400 hover:text-cyan-400" href="#about">About Us</a></p>
                   </div>
                 </div>
 

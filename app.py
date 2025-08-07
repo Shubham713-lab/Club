@@ -153,24 +153,52 @@ def submit_stage(event_id, stage_id):
 # ---------- Home Page ----------
 @app.route('/')
 def home():
-    """Renders the home page with a list of events."""
+    """Renders the home page with a list of events and results."""
     conn = get_db_connection()
     if conn is None:
-        return render_template('home.html', events=[])
+        return render_template('home.html', events=[], results={})
 
-    cur = conn.cursor(cursor_factory=DictCursor) # Use DictCursor for fetching by name
+    cur = conn.cursor(cursor_factory=DictCursor)
+    events = []
+    grouped_results = {}
+
     try:
-        # Select image_url instead of image_path
+        # Fetch events
         cur.execute("SELECT id, title, description, date, short_description, image_url FROM events ORDER BY date DESC")
         events = cur.fetchall()
+
+        # Fetch winners
+        cur.execute('''
+            SELECT event_title, position, winner_name
+            FROM event_results
+            ORDER BY event_title,
+                     CASE
+                         WHEN position LIKE '1%' THEN 1
+                         WHEN position LIKE '2%' THEN 2
+                         WHEN position LIKE '3%' THEN 3
+                         ELSE 4
+                     END
+        ''')
+        raw_results = cur.fetchall()
+
+        for result_row in raw_results:
+            event_title = result_row['event_title']
+            position = result_row['position']
+            name = result_row['winner_name']
+            if event_title not in grouped_results:
+                grouped_results[event_title] = []
+            grouped_results[event_title].append((position, name))
+
     except psycopg2.Error as e:
-        flash(f"Error loading events: {e}", "danger")
-        print(f"HOME PAGE EVENTS ERROR: {e}")
+        flash(f"Error loading page data: {e}", "danger")
+        print(f"HOME PAGE DATA ERROR: {e}")
         events = []
+        grouped_results = {}
     finally:
         if cur: cur.close()
         if conn: conn.close()
-    return render_template('home.html', events=events)
+        
+    return render_template('home.html', events=events, results=grouped_results)
 
 # ---------- Login ----------
 @app.route('/login', methods=['GET', 'POST'])
