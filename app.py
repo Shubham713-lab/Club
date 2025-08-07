@@ -196,7 +196,7 @@ def login():
                 session['user_id'] = admin['username']
                 session['role'] = 'admin'
                 flash("Admin login successful!", "success")
-                return redirect(url_for('home'))
+                return redirect(url_for('dashboard'))
 
             # 2. Check in users table
             cur.execute("SELECT user_id, name, role, password FROM users WHERE user_id = %s", (user_id,))
@@ -206,7 +206,7 @@ def login():
                 session['user_id'] = user['user_id']
                 session['role'] = user['role']
                 flash("Login successful!", "success")
-                return redirect(url_for('home'))
+                return redirect(url_for('dashboard'))
 
             # 3. Check in mentors table
             cur.execute("SELECT user_id, name, password FROM mentors WHERE user_id = %s", (user_id,))
@@ -216,7 +216,7 @@ def login():
                 session['user_id'] = mentor['user_id']
                 session['role'] = 'mentor'
                 flash("Login successful!", "success")
-                return redirect(url_for('home'))
+                return redirect(url_for('dashboard'))
 
             flash("Invalid User ID or Password", "danger")
 
@@ -1081,8 +1081,9 @@ def student_dashboard():
         cur.execute("SELECT id, title, description, date, short_description, image_url FROM events ORDER BY date DESC")
         events = cur.fetchall()
 
+        # CORRECTED: Fetch winner_email as well to match the template
         cur.execute('''
-            SELECT event_title, position, winner_name
+            SELECT event_title, position, winner_name, winner_email
             FROM event_results
             ORDER BY event_title,
                      CASE 
@@ -1098,9 +1099,10 @@ def student_dashboard():
             event_title = result_row['event_title']
             position = result_row['position']
             name = result_row['winner_name']
+            email = result_row.get('winner_email', '') # Use .get() for safety
             if event_title not in grouped_results:
                 grouped_results[event_title] = []
-            grouped_results[event_title].append((position, name))
+            grouped_results[event_title].append((position, name, email))
 
     except psycopg2.Error as e:
         flash(f"Database error on student dashboard: {e}", "danger")
