@@ -855,7 +855,6 @@ def admin_dashboard():
         conn.rollback()
         flash(f"Database error on admin dashboard: {e}", "danger")
         print(f"ADMIN DASHBOARD ERROR: {e}")
-        event_stats = []
     finally:
         if cur: cur.close()
         if conn: conn.close()
@@ -1324,7 +1323,7 @@ def change_password():
     """Allows student users to change their password."""
     if 'user_id' not in session or session['role'] != 'student':
         flash("Unauthorized access. Please log in as a student.", "danger")
-        return redirect(url_for('profile'))
+        return redirect(url_for('login'))
 
     current_password = request.form.get('current_password')
     new_password = request.form.get('new_password')
