@@ -196,7 +196,7 @@ def login():
                 session['user_id'] = admin['username']
                 session['role'] = 'admin'
                 flash("Admin login successful!", "success")
-                return redirect(url_for('dashboard'))
+                return redirect(url_for('home'))
 
             # 2. Check in users table
             cur.execute("SELECT user_id, name, role, password FROM users WHERE user_id = %s", (user_id,))
@@ -206,7 +206,7 @@ def login():
                 session['user_id'] = user['user_id']
                 session['role'] = user['role']
                 flash("Login successful!", "success")
-                return redirect(url_for('dashboard'))
+                return redirect(url_for('home'))
 
             # 3. Check in mentors table
             cur.execute("SELECT user_id, name, password FROM mentors WHERE user_id = %s", (user_id,))
@@ -216,7 +216,7 @@ def login():
                 session['user_id'] = mentor['user_id']
                 session['role'] = 'mentor'
                 flash("Login successful!", "success")
-                return redirect(url_for('dashboard'))
+                return redirect(url_for('home'))
 
             flash("Invalid User ID or Password", "danger")
 
@@ -265,6 +265,45 @@ def send_otp(receiver_email, otp):
         print(f"[GENERAL ERROR] Failed to send OTP to {receiver_email}. Error: {e}")
         flash("Something went wrong while sending OTP. Please try again.", "danger")
     return False
+
+# --- NEW FUNCTION: Send Welcome Email ---
+def send_welcome_email(receiver_email, name, user_id):
+    """Sends a welcome email with the user's ID upon registration."""
+    EMAIL_ADDRESS = os.environ.get("EMAIL_USER")
+    EMAIL_PASSWORD = os.environ.get("EMAIL_PASS")
+
+    if not EMAIL_ADDRESS or not EMAIL_PASSWORD:
+        print("[CONFIG ERROR] Email credentials not set for welcome email.")
+        return False
+
+    msg = EmailMessage()
+    msg['Subject'] = 'Welcome to Code Forge! 🎉'
+    msg['From'] = EMAIL_ADDRESS
+    msg['To'] = receiver_email
+    msg.set_content(f'''Hi {name},
+
+Welcome to the Code Forge community! We're thrilled to have you on board.
+
+Your journey to innovate, collaborate, and create starts now. Here is your unique User ID for logging in:
+
+User ID: {user_id}
+
+Keep it safe! We can't wait to see what you'll build with us.
+
+Best,
+The Code Forge Team
+''')
+
+    try:
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+            smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+            smtp.send_message(msg)
+        print(f"[SUCCESS] Welcome email sent to {receiver_email}")
+        return True
+    except Exception as e:
+        print(f"[ERROR] Failed to send welcome email to {receiver_email}. Error: {e}")
+    return False
+# --- END NEW FUNCTION ---
 
 @app.route('/view_all_users')
 def view_all_users():
@@ -419,6 +458,10 @@ def register_details():
             )
             conn.commit()
 
+            # --- ADDED: Send welcome email after successful registration ---
+            send_welcome_email(session['email'], session['name'], user_id)
+            # ----------------------------------------------------------------
+
             session['user'] = session['name']
             session['user_id'] = user_id
             session['role'] = 'student'
@@ -466,6 +509,10 @@ def register_mentor():
                 (user_id, name, college, email, expertise, skills, hashed_password)
             )
             conn.commit()
+
+            # --- ADDED: Send welcome email after successful registration ---
+            send_welcome_email(email, name, user_id)
+            # ----------------------------------------------------------------
 
             session['user'] = name
             session['user_id'] = user_id
@@ -594,16 +641,18 @@ def announce_winner():
     cur = conn.cursor()
 
     try:
+        # Simplified loop to get only name and position
         for i in range(1, 4):
             position = request.form.get(f'position{i}')
             name = request.form.get(f'name{i}')
-            email = request.form.get(f'email{i}')
 
-            if name and email:
+            # Check if a name was provided for the position
+            if name:
+                # Updated SQL query to insert only the necessary fields
                 cur.execute('''
-                    INSERT INTO event_results (event_title, position, winner_name, winner_email)
-                    VALUES (%s, %s, %s, %s)
-                ''', (event_title, position, name, email))
+                    INSERT INTO event_results (event_title, position, winner_name)
+                    VALUES (%s, %s, %s)
+                ''', (event_title, position, name))
 
         conn.commit()
         flash("Winners announced successfully!", "success")
@@ -1034,7 +1083,7 @@ def student_dashboard():
         events = cur.fetchall()
 
         cur.execute('''
-            SELECT event_title, position, winner_name, winner_email
+            SELECT event_title, position, winner_name
             FROM event_results
             ORDER BY event_title,
                      CASE 
@@ -1050,10 +1099,9 @@ def student_dashboard():
             event_title = result_row['event_title']
             position = result_row['position']
             name = result_row['winner_name']
-            email = result_row['winner_email']
             if event_title not in grouped_results:
                 grouped_results[event_title] = []
-            grouped_results[event_title].append((position, name, email))
+            grouped_results[event_title].append((position, name))
 
     except psycopg2.Error as e:
         flash(f"Database error on student dashboard: {e}", "danger")
@@ -1276,7 +1324,7 @@ def change_password():
     """Allows student users to change their password."""
     if 'user_id' not in session or session['role'] != 'student':
         flash("Unauthorized access. Please log in as a student.", "danger")
-        return redirect(url_for('login'))
+        return redirect(url_for('profile'))
 
     current_password = request.form.get('current_password')
     new_password = request.form.get('new_password')
