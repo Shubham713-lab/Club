@@ -70,7 +70,6 @@
         </div>
         <div id="navbar-collapse" class="hs-collapse hidden overflow-hidden transition-all duration-300 basis-full grow md:block md:w-auto md:basis-auto md:order-2">
           <div class="flex flex-col gap-5 mt-5 md:flex-row md:items-center md:justify-end md:mt-0 md:pl-5">
-            <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('home') }}">Home</a>
             {% if session['user'] %}
                 <a class="font-medium text-cyan-400" href="{{ url_for('dashboard') }}" aria-current="page">Dashboard</a>
                 <a class="font-medium text-gray-400 hover:text-cyan-400" href="{{ url_for('student_registered_events') }}">Registered Events</a>
@@ -299,8 +298,8 @@
                 <div>
                   <h4 class="text-lg font-semibold text-gray-200">Quick Links</h4>
                   <div class="mt-3 grid space-y-3 text-sm">
-                    <p><a class="inline-flex gap-x-2 text-gray-400 hover:text-cyan-400" href="#">Events</a></p>
-                    <p><a class="inline-flex gap-x-2 text-gray-400 hover:text-cyan-400" href="#">About Us</a></p>
+                    <p><a class="inline-flex gap-x-2 text-gray-400 hover:text-cyan-400" href="{{ url_for('student_registered_events') }}">Registered Events</a></p>
+                    <p><a class="inline-flex gap-x-2 text-gray-400 hover:text-cyan-400" href="{{ url_for('brainstorm') }}">Brainstorm Ideas</a></p>
                   </div>
                 </div>
 
